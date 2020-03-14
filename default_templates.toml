@@ -1,0 +1,40 @@
+[hello]
+hello = "hello ${name}."
+
+[shakespeare]
+shakespeare = "${data}"
+
+[version]
+version = "${repo} (${tag}, on ${revision})"
+
+[uptime]
+uptime = "${room} has been live for ${uptime}."
+offline = "${room} appears to be offline."
+
+[viewers]
+viewers = "there are ${count} viewers."
+no_viewers = "noone is watching :("
+offline = "${channel} is offline"
+
+[crates]
+not_exact = "closest match: ${name} = ${version}"
+crate_vers = "${name} = ${version}"
+description = "${description}"
+links = "${repo} | ${docs}"
+unknown = "I couldn't find a crate matching '${name}'"
+no_crate = "a crate name must be provided"
+
+[user_defined]
+error_reserved_name = ""
+error_already_exists = ""
+error_failed_to_add = ""
+error_edit_failed = ""
+error_invalid_command = ""
+
+added = ""
+edited = ""
+renamed = ""
+deleted = ""
+
+command_description = ""
+command_created_at = ""
