@@ -1,19 +1,20 @@
-use notify::Watcher as _;
+use futures::{future::BoxFuture, stream::FuturesUnordered};
+use notify::{event::Event, Watcher as _};
 use std::path::Path;
+use tokio::{sync::watch, time::Duration};
 
 /// tokio broadcast file watcher
 pub struct Watcher {
     watcher: notify::RecommendedWatcher,
-    rx: crossbeam_channel::Receiver<Result<notify::event::Event, notify::Error>>,
-    watched:
-        futures::stream::FuturesUnordered<futures::future::BoxFuture<'static, anyhow::Result<()>>>,
+    rx: crossbeam_channel::Receiver<Result<Event, notify::Error>>,
+    watched: FuturesUnordered<BoxFuture<'static, anyhow::Result<()>>>,
 }
 
 impl Watcher {
     /// create a new watcher
     pub fn new() -> anyhow::Result<Self> {
         let (tx, rx) = crossbeam_channel::bounded(32);
-        let watcher = notify::watcher(tx, std::time::Duration::from_secs(2))?;
+        let watcher = notify::watcher(tx, Duration::from_secs(2))?;
         Ok(Self {
             watcher,
             rx,
@@ -26,18 +27,18 @@ impl Watcher {
         &mut self,
         file: impl AsRef<Path>,
         item: C,
-    ) -> anyhow::Result<tokio::sync::watch::Receiver<C>>
+    ) -> anyhow::Result<watch::Receiver<C>>
     where
         for<'de> C: serde::Deserialize<'de> + Send + Sync + 'static,
     {
-        let (watch_tx, watch_rx) = tokio::sync::watch::channel(item);
+        let (watch_tx, watch_rx) = watch::channel(item);
         self.watcher
             .watch(file, notify::RecursiveMode::NonRecursive)?;
 
         let rx = self.rx.clone();
         let fut = tokio::task::spawn_blocking(move || {
             for event in rx.into_iter().flatten() {
-                use notify::event::{DataChange, Event, EventKind, ModifyKind};
+                use notify::event::{DataChange, EventKind, ModifyKind};
 
                 let Event { kind, paths, .. } = event;
                 if paths.is_empty() {
