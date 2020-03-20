@@ -3,7 +3,6 @@ use {super::*, crate::*};
 
 #[derive(Debug, Template)]
 #[namespace("crates")]
-
 enum Response<'a> {
     NotExact { name: &'a str, version: &'a str },
     CrateVers { name: &'a str, version: &'a str },
@@ -65,7 +64,7 @@ where
             crate_,
         ),
         None => {
-            let c = data.crates.get(0).unwrap();
+            let c = &data.crates[0];
             let resp = Response::NotExact {
                 name: &c.name,
                 version: &c.max_version,
