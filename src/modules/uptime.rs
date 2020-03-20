@@ -33,11 +33,11 @@ where
         Some(stream) => {
             let dur = time::OffsetDateTime::now() - stream.started_at;
             Response::Uptime {
-                room: &name,
+                room: name,
                 uptime: dur.as_readable_time(),
             }
         }
-        None => Response::Offline { room: &name },
+        None => Response::Offline { room: name },
     };
 
     responder.say(&context, &resp).await

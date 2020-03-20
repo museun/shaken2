@@ -7,6 +7,7 @@ pub struct Config {
     pub user_name: String,
     pub rooms: Vec<String>,
     pub shakespeare: Shakespeare,
+    pub whatsong: WhatSong,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +17,12 @@ pub struct Shakespeare {
     pub chance: f32,
     pub quiet: u64,
     pub interval: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhatSong {
+    pub whitelist: HashSet<String>,
+    pub address: String,
 }
 
 impl Config {
@@ -32,6 +39,13 @@ impl Config {
                 chance: 0.5,
                 quiet: 300,
                 interval: 30,
+            },
+            whatsong: WhatSong {
+                whitelist: vec!["museun"]
+                    .into_iter()
+                    .map(ToString::to_string)
+                    .collect(),
+                address: "http://localhost:58810".into(),
             },
         };
         std::fs::write(path, toml::to_string_pretty(&default)?)?;

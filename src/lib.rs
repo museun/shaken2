@@ -65,66 +65,68 @@ macro_rules! maybe {
 pub use template::{markings, Template};
 
 pub mod args;
+pub mod secrets;
 
 mod bot;
 pub use bot::Bot;
 
 mod command;
-pub use command::{Command, CommandMap};
+use command::Command;
+pub use command::CommandMap;
 
 pub mod config;
-pub use config::{Config, Shakespeare};
+use config::Config;
 
 mod context;
-pub use context::Context;
+use context::Context;
 
 pub mod database;
 
 mod directories;
 pub use directories::Directories;
 
-pub mod format;
+mod format;
 pub use format::Timestamp;
 
 mod handler;
 pub use handler::Handler;
 
-pub mod http;
-
-pub mod kv;
+mod http;
+mod kv;
 
 pub mod modules;
 
 mod name_and_id;
-pub use name_and_id::NameAndId;
+use name_and_id::NameAndId;
 
 mod passive;
-pub use passive::{Passive, PassiveList};
+use passive::Passive;
+pub use passive::PassiveList;
 
 pub mod resolver;
-pub use resolver::Resolver;
+use resolver::Resolver;
 
 mod responder;
-pub use responder::{LoggingResponder, RespondableContext, Responder, WriterResponder};
+pub use responder::{LoggingResponder, WriterResponder};
+use responder::{RespondableContext, Responder};
 
 mod room;
-pub use room::Room;
+use room::Room;
 
-pub mod serde_util;
+mod serde_util;
 
 mod state;
-pub use state::{State, StateRef};
+pub use state::State;
 
 mod tracker;
-pub use tracker::Tracker;
+use tracker::Tracker;
 
-pub mod twitch;
+mod twitch;
 
 mod user;
-pub use user::User;
+use user::User;
 
-pub mod util;
+mod util;
 use util::DontCare as _;
 
 mod watcher;
-pub use watcher::Watcher;

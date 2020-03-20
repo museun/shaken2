@@ -1,10 +1,10 @@
 #![cfg_attr(debug_assertions, allow(dead_code, unused_variables, unused_mut))]
+use {super::*, crate::*};
 
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
 };
-use {super::*, crate::*};
 
 #[derive(Debug, Template)]
 #[namespace("user_defined")]
@@ -113,7 +113,7 @@ where
     // get all of the registered commands
     // remove any existing adjoint with registered
 
-    init.state.write().await.insert(builtin);
+    init.state.insert(builtin);
 }
 
 async fn add<R>(context: Context<Command>, mut responder: R) -> Result

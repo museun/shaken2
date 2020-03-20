@@ -4,12 +4,14 @@ use std::path::Path;
 use tokio::{sync::watch, time::Duration};
 
 /// tokio broadcast file watcher
+#[allow(dead_code)]
 pub struct Watcher {
     watcher: notify::RecommendedWatcher,
     rx: crossbeam_channel::Receiver<Result<Event, notify::Error>>,
     watched: FuturesUnordered<BoxFuture<'static, anyhow::Result<()>>>,
 }
 
+#[allow(dead_code)]
 impl Watcher {
     /// create a new watcher
     pub fn new() -> anyhow::Result<Self> {

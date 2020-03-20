@@ -98,7 +98,7 @@ where
 
     pub fn iter(&self) -> PassiveIter<'_, R> {
         PassiveIter {
-            inner: &self,
+            inner: self,
             pos: 0,
         }
     }

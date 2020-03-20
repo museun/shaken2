@@ -22,9 +22,9 @@ where
     R: Responder + Send + 'static,
 {
     let resp = Response::Version {
-        repo: &env!("CARGO_PKG_REPOSITORY"),
-        tag: &env!("SHAKEN_GIT_TAG"),
-        revision: &env!("SHAKEN_GIT_REVISION"),
+        repo: env!("CARGO_PKG_REPOSITORY"),
+        tag: env!("SHAKEN_GIT_TAG"),
+        revision: env!("SHAKEN_GIT_REVISION"),
     };
     responder.reply(&context, &resp).await
 }

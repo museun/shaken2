@@ -1,4 +1,4 @@
-use ::serde::Deserialize;
+use serde::Deserialize;
 use {super::*, crate::*};
 
 #[derive(Debug, Template)]
@@ -74,14 +74,14 @@ where
     };
 
     let mut resp = vec![resp];
+
     if let Some(ref desc) = crate_.description {
         resp.push(Response::Description {
             description: desc.replace('\n', " "),
         })
     }
 
-    if let (Some(docs), Some(repo)) = (crate_.documentation.as_deref(), crate_.repository.as_ref())
-    {
+    if let (Some(ref docs), Some(ref repo)) = (&crate_.documentation, &crate_.repository) {
         resp.push(Response::Links { repo, docs });
     }
 

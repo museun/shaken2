@@ -78,12 +78,13 @@ fn handle_init() -> ! {
         println!("{}", path.display());
         println!();
 
-        if let Err(err) = write(&path) {
-            eprintln!("ERROR! cannot write default {} file: {}", name, err);
-            return true;
+        match write(path) {
+            Err(err) => {
+                eprintln!("ERROR! cannot write default {} file: {}", name, err);
+                true
+            }
+            _ => false,
         }
-
-        false
     }
 
     let path = get_config_path();
@@ -146,7 +147,7 @@ fn handle_verify() -> (Config, DefaultTemplateStore) {
     );
 
     match (config, templates) {
-        (Ok(config), Ok(templates)) => return (config, templates),
+        (Ok(config), Ok(templates)) => (config, templates),
         (left, right) => {
             if let Err(err) = left {
                 crate::util::print_backtrace(err)

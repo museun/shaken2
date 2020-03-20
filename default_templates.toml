@@ -24,6 +24,11 @@ links = "${repo} | ${docs}"
 unknown = "I couldn't find a crate matching '${name}'"
 no_crate = "a crate name must be provided"
 
+[whatsong]
+current = "${title} | ${url}?ts=${timestamp}"
+previous = "${title} | ${url}"
+no_song = "no song is playing (probably)"
+
 [user_defined]
 error_reserved_name = ""
 error_already_exists = ""
@@ -38,3 +43,4 @@ deleted = ""
 
 command_description = ""
 command_created_at = ""
+

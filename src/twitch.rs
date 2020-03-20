@@ -77,6 +77,7 @@ impl Client {
             .map(|data| data.data)
     }
 
+    #[allow(dead_code)]
     pub async fn get_streams_from_id<I>(&self, user_ids: I) -> anyhow::Result<Vec<Stream>>
     where
         I: IntoIterator,
@@ -92,6 +93,7 @@ impl Client {
             .map(|data| data.data)
     }
 
+    #[allow(dead_code)]
     pub async fn get_users<I>(&self, user_logins: I) -> anyhow::Result<Vec<User>>
     where
         I: IntoIterator,
@@ -107,6 +109,7 @@ impl Client {
             .map(|data| data.data)
     }
 
+    #[allow(dead_code)]
     pub async fn get_users_from_id<I>(&self, user_ids: I) -> anyhow::Result<Vec<User>>
     where
         I: IntoIterator,
@@ -122,6 +125,7 @@ impl Client {
             .map(|data| data.data)
     }
 
+    #[allow(dead_code)]
     pub async fn get_names_for(&self, room: &str) -> anyhow::Result<Users> {
         #[derive(Deserialize)]
         struct Data {

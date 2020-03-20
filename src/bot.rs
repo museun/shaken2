@@ -2,10 +2,11 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use super::{
-    Command, CommandMap, Config, Context, Passive, PassiveList, Responder, StateRef, Tracker,
+    Command, CommandMap, Config, Context, Passive, PassiveList, Responder, State, Tracker,
 };
 
 use futures::prelude::*;
+use tokio::sync::RwLock;
 use twitchchat::{events, messages, Control, Dispatcher, EventStream};
 
 pub struct Bot<R: Responder + Send + 'static> {
@@ -40,8 +41,9 @@ where
         }
     }
 
-    pub async fn run(mut self, tracker: Tracker, state: StateRef) -> anyhow::Result<()> {
+    pub async fn run(mut self, state: State) -> anyhow::Result<()> {
         let mut writer = self.control.writer().clone();
+
         let config = self.config.clone();
 
         let messages::GlobalUserState {
@@ -61,11 +63,13 @@ where
             color
         );
 
+        let tracker = Tracker::new();
         let user_id = user_id.parse().expect("our userid must be a u64");
         tracker
             .users
             .set(user_id, display_name.as_ref().unwrap())
             .await;
+        let state = Arc::new(RwLock::new(state));
 
         tokio::pin! {
             let active = self.dispatch_actives(
@@ -107,7 +111,7 @@ where
         &self,
         user_id: u64,
         tracker: Tracker,
-        state: StateRef,
+        state: Arc<RwLock<State>>,
         config: Config,
     ) {
         let mut passive = self.dispatcher.subscribe::<events::Privmsg>();
@@ -139,7 +143,7 @@ where
         &self,
         user_id: u64,
         tracker: Tracker,
-        state: StateRef,
+        state: Arc<RwLock<State>>,
         config: Config,
     ) {
         let mut active = self.dispatcher.subscribe::<events::Privmsg>();

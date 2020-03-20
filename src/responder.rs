@@ -4,7 +4,7 @@ use futures::prelude::*;
 use template::Template;
 use twitchchat::Writer;
 
-use crate::{Context, Resolver, Tracker};
+use crate::{Context, Resolver};
 
 pub trait RespondableContext {
     fn room(&self) -> Room<'_>;
@@ -100,16 +100,11 @@ impl<R: Responder> Responder for LoggingResponder<R> {
 pub struct WriterResponder {
     writer: Writer,
     resolver: Resolver,
-    tracker: Tracker,
 }
 
 impl WriterResponder {
-    pub fn new(writer: Writer, resolver: Resolver, tracker: Tracker) -> Self {
-        Self {
-            writer,
-            resolver,
-            tracker,
-        }
+    pub fn new(writer: Writer, resolver: Resolver) -> Self {
+        Self { writer, resolver }
     }
 }
 

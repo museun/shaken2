@@ -18,6 +18,7 @@ pub struct Command {
 
 impl Command {
     const PREFIX: &'static str = "!";
+
     pub fn parse(message: Arc<Privmsg<'static>>) -> Option<Self> {
         let input = &*message.data.trim();
         if !input.starts_with(Self::PREFIX) {

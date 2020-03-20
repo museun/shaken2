@@ -1,11 +1,13 @@
-use crate::{Config, RespondableContext, Room, State, StateRef, Tracker, User};
+use crate::{Config, RespondableContext, Room, State, Tracker, User};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct Context<Args> {
     user_id: u64,
     args: Args,
     tracker: Tracker,
-    state: StateRef,
+    state: Arc<RwLock<State>>,
     config: Config, // TODO use a watch here
 }
 
@@ -14,7 +16,7 @@ impl<Args> Context<Args> {
         user_id: u64,
         args: Args,
         tracker: Tracker,
-        state: StateRef,
+        state: Arc<RwLock<State>>,
         config: Config,
     ) -> Self {
         Self {
@@ -38,14 +40,14 @@ impl<Args> Context<Args> {
         &mut self.tracker
     }
 
-    pub async fn with_state<'a, F, T>(&'a self, func: F) -> T
+    pub async fn with_state<F, T>(&self, func: F) -> T
     where
-        F: Fn(tokio::sync::RwLockReadGuard<'a, State>) -> T,
+        F: Fn(tokio::sync::RwLockReadGuard<'_, State>) -> T,
     {
         func(self.state.read().await)
     }
 
-    pub async fn state<'a>(&'a self) -> tokio::sync::RwLockReadGuard<'a, State> {
+    pub async fn state(&self) -> tokio::sync::RwLockReadGuard<'_, State> {
         self.state.read().await
     }
 
@@ -53,7 +55,7 @@ impl<Args> Context<Args> {
         self.state.write().await
     }
 
-    pub fn args(&self) -> &Args {
+    pub const fn args(&self) -> &Args {
         &self.args
     }
 }

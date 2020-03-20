@@ -32,8 +32,8 @@ where
         *chance,
     );
 
-    init.state.write().await.insert(client);
-    init.state.write().await.insert(shakespeare.clone());
+    init.state.insert(client);
+    init.state.insert(shakespeare.clone());
 
     init.command_map.add("speak", command);
     init.passive_list.add(passive);

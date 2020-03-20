@@ -26,9 +26,9 @@ dependencies = [
 
 [[package]]
 name = "alto_logger"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8df6ab03324235d42c1f8d51f6fe22dd8de7973ff2719bb20f4c9a8e462c066"
+checksum = "953382e8040b4444674d17e5fed411f70c594d57933b179b2455388e30bd5d35"
 dependencies = [
  "log",
  "once_cell",
@@ -236,12 +236,11 @@ dependencies = [
 
 [[package]]
 name = "crossbeam-channel"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f0ed1a4de2235cabda8558ff5840bffb97fcb64c97827f354a451307df5f72b"
+checksum = "c8ec7fcd21571dc78f96cc96243cab8d8f035247c3efd16c687be154c3fa9efa"
 dependencies = [
  "crossbeam-utils 0.6.6",
- "smallvec 0.6.13",
 ]
 
 [[package]]
@@ -617,9 +616,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7b15203263d1faa615f9337d79c1d37959439dc46c2b4faab33286fadc2a1c5"
+checksum = "ed6081100e960d9d74734659ffc9cc91daf1c0fc7aceb8eaa94ee1a3f5046f2e"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -924,7 +923,7 @@ dependencies = [
  "anymap",
  "bitflags",
  "chashmap",
- "crossbeam-channel 0.3.8",
+ "crossbeam-channel 0.3.9",
  "filetime",
  "fsevent",
  "fsevent-sys",
@@ -1379,9 +1378,9 @@ dependencies = [
 
 [[package]]
 name = "schannel"
-version = "0.1.17"
+version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "507a9e6e8ffe0a4e0ebb9a10293e62fdf7657c06f1b8bb07a8fcf697d2abf295"
+checksum = "039c25b130bd8c1321ee2d7de7fde2659fa9c2744e4bb29711cfc852ea53cd19"
 dependencies = [
  "lazy_static",
  "winapi 0.3.8",
@@ -1506,7 +1505,7 @@ dependencies = [
  "alto_logger",
  "anyhow",
  "client",
- "crossbeam-channel 0.3.8",
+ "crossbeam-channel 0.3.9",
  "dirs",
  "futures",
  "httptest",
@@ -1519,6 +1518,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_cbor",
+ "serde_json",
  "template",
  "time 0.2.9",
  "tokio",
@@ -1644,9 +1644,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "syn"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123bd9499cfb380418d509322d7a6d52e5315f064fe4b3ad18a53d6b92c07859"
+checksum = "0df0eb663f387145cab623dea85b09c2c5b4b0aef44e945d928e682fce71bb03"
 dependencies = [
  "proc-macro2",
  "quote",
