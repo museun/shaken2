@@ -14,6 +14,6 @@ pub trait NameAndId {
             return Ok(());
         }
         log::debug!("{} ({}) isn't on the list", name, id);
-        crate::util::dont_care()
+        crate::dont_care()
     }
 }
