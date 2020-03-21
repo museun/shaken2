@@ -16,7 +16,7 @@ async fn main() -> anyhow::Result<()> {
     alto_logger::init(alto_logger::Style::MultiLine, Default::default())?;
 
     // do this before the args so its a hard error
-    let secrets = secrets::Secrets::from_env()?;
+    let mut secrets = secrets::Secrets::from_env()?;
 
     let (config, templates) = args::handle_args();
 
@@ -45,15 +45,15 @@ async fn main() -> anyhow::Result<()> {
         command_map: &mut commands,
         passive_list: &mut passives,
         state: &mut state,
-        secrets: &secrets,
+        secrets: &mut secrets,
     }
     .initialize()
-    .await;
+    .await?; // does this have to be async?
 
     // connect to twitch
     let conn = twitchchat::connect_easy_tls(
-        &config.user_name, //
-        &secrets.twitch_oauth_token,
+        &config.user_name,
+        &secrets.take(crate::secrets::TWITCH_OAUTH_TOKEN)?,
     )
     .await?;
 

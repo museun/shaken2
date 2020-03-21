@@ -7,11 +7,11 @@ pub struct ModuleInit<'a, R> {
     pub command_map: &'a mut CommandMap<R>,
     pub passive_list: &'a mut PassiveList<R>,
     pub state: &'a mut State,
-    pub secrets: &'a crate::secrets::Secrets,
+    pub secrets: &'a mut crate::secrets::Secrets,
 }
 
 impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
-    pub async fn initialize(&mut self) {
+    pub async fn initialize(&mut self) -> anyhow::Result<()> {
         shakespeare::initialize(self).await;
         hello::initialize(self).await;
         uptime::initialize(self).await;
@@ -23,9 +23,11 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
         // this has to be at the end so it won't clobber the built-in commands
         // user_defined::initialize(self).await;
 
-        use crate::twitch::Client;
-        let client = Client::new(&self.secrets.twitch_client_id);
+        let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
+        let client = crate::twitch::Client::new(&twitch_client_id);
         self.state.insert(client);
+
+        Ok(())
     }
 }
 
