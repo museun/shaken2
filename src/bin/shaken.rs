@@ -40,9 +40,8 @@ async fn main() -> anyhow::Result<()> {
     let dispatcher = Dispatcher::new();
     let (runner, mut control) = Runner::new(dispatcher.clone(), Default::default());
 
-    let (state, commands, passives) = modules::ModuleInit::new(&config, &mut secrets)
-        .initialize()
-        .await?; // TODO does this have to be async?
+    let (state, commands, passives) =
+        modules::ModuleInit::new(&config, &mut secrets).initialize()?;
 
     // connect to twitch
     let conn = twitchchat::connect_easy_tls(

@@ -27,22 +27,22 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
         }
     }
 
-    pub async fn initialize(mut self) -> anyhow::Result<(State, CommandMap<R>, PassiveList<R>)> {
+    pub fn initialize(mut self) -> anyhow::Result<(State, CommandMap<R>, PassiveList<R>)> {
         // TODO split this off into its own function
         let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
         let client = crate::twitch::Client::new(&twitch_client_id);
         self.state.insert(client);
 
-        shakespeare::initialize(&mut self).await;
-        hello::initialize(&mut self).await;
-        uptime::initialize(&mut self).await;
-        viewers::initialize(&mut self).await;
-        crates::initialize(&mut self).await;
-        version::initialize(&mut self).await;
-        whatsong::initialize(&mut self).await;
+        shakespeare::initialize(&mut self);
+        hello::initialize(&mut self);
+        uptime::initialize(&mut self);
+        viewers::initialize(&mut self);
+        crates::initialize(&mut self);
+        version::initialize(&mut self);
+        whatsong::initialize(&mut self);
 
         // this has to be at the end so it won't clobber the built-in commands
-        // user_defined::initialize(self).await;
+        // user_defined::initialize(self);
 
         let Self {
             state,
