@@ -60,6 +60,7 @@ mod tracker;
 use tracker::Tracker;
 
 mod twitch;
+pub use twitch::Client as TwitchClient;
 
 mod user;
 use user::User;

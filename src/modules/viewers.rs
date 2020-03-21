@@ -20,7 +20,7 @@ where
     R: Responder + Send + 'static,
 {
     let state = context.state().await;
-    let client = state.expect_get::<crate::twitch::Client>()?;
+    let client = state.expect_get::<crate::TwitchClient>()?;
 
     let room = context.room();
     let name = room.remove_hashes();

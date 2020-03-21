@@ -1,6 +1,5 @@
 use ::serde::{Deserialize, Serialize};
 
-#[allow(dead_code)]
 pub async fn get_json_with_headers<'a, T, U, H, I, Q>(
     url: U,
     headers: H,

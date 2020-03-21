@@ -14,7 +14,8 @@ impl<'a> std::fmt::Display for Room<'a> {
 
 impl<'a> Room<'a> {
     pub fn remove_hashes(&self) -> &str {
-        crate::util::remove_hashes(&self.name)
+        let left = self.name.chars().take_while(|&c| c == '#').count();
+        &self.name[left..]
     }
 }
 

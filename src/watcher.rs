@@ -3,17 +3,15 @@ use notify::{event::Event, Watcher as _};
 use std::path::Path;
 use tokio::{sync::watch, time::Duration};
 
-/// tokio broadcast file watcher
-#[allow(dead_code)]
+/// Tokio broadcast file watcher
 pub struct Watcher {
     watcher: notify::RecommendedWatcher,
     rx: crossbeam_channel::Receiver<Result<Event, notify::Error>>,
     watched: FuturesUnordered<BoxFuture<'static, anyhow::Result<()>>>,
 }
 
-#[allow(dead_code)]
 impl Watcher {
-    /// create a new watcher
+    /// Create a new watcher
     pub fn new() -> anyhow::Result<Self> {
         let (tx, rx) = crossbeam_channel::bounded(32);
         let watcher = notify::watcher(tx, Duration::from_secs(2))?;
@@ -24,7 +22,7 @@ impl Watcher {
         })
     }
 
-    /// watch this file, provided the initial item
+    /// Watch this file provided the initial item
     pub fn watch<C: Clone>(
         &mut self,
         file: impl AsRef<Path>,

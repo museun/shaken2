@@ -37,7 +37,6 @@ impl<'a> KeyValueStore<'a> {
             })
     }
 
-    #[allow(dead_code)]
     pub fn in_memory(table: impl Into<Cow<'a, str>>) -> anyhow::Result<Self> {
         let table = table.into();
         let conn = database::get_in_memory(&table)?;
@@ -94,7 +93,6 @@ impl<'a> KeyValueStore<'a> {
             })
     }
 
-    #[allow(dead_code)]
     pub fn remove<K: ?Sized>(&self, key: &K) -> bool
     where
         K: serde::Serialize + std::fmt::Debug,

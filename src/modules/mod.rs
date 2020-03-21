@@ -54,7 +54,7 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
         // place the state deps here if you need them initialize before any of
         // the modules
         let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
-        let client = crate::twitch::Client::new(&twitch_client_id);
+        let client = crate::TwitchClient::new(&twitch_client_id);
         self.state.insert(client);
 
         Ok(())

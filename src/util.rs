@@ -1,10 +1,11 @@
 use crate::{Context, RespondableContext};
 
-#[allow(dead_code)]
+/// Get the current timestamp (time since the UNIX epoch) in milliseconds
 pub fn timestamp_ms() -> u64 {
     get_timestamp().as_millis() as _
 }
 
+/// Get the current timestamp (time since the UNIX epoch) in seconds
 pub fn timestamp() -> u64 {
     get_timestamp().as_secs() as _
 }
@@ -16,33 +17,14 @@ fn get_timestamp() -> std::time::Duration {
         .unwrap()
 }
 
-pub fn print_backtrace(error: anyhow::Error) {
-    for (i, cause) in error.chain().enumerate() {
-        if i > 0 {
-            eprintln!();
-            eprintln!("because");
-            eprint!("  ");
-        }
-        eprintln!("{}", cause);
-    }
-}
-
-pub fn remove_hashes(input: &str) -> &str {
-    let left = input.chars().take_while(|&c| c == '#').count();
-    &input[left..]
-}
-
-#[allow(dead_code)]
-pub fn type_name_val<T>(_ignored: &T) -> &'static str {
-    type_name::<T>()
-}
-
+/// Get a short representation of the provided type
 pub fn type_name<T>() -> &'static str {
     reduce_type_name(std::any::type_name::<T>())
 }
 
-// this is .. unique
+/// Tries to reduce a complex type name down to its base type
 pub fn reduce_type_name(mut input: &str) -> &str {
+    // this is .. totally not something you should do
     fn trim_type(input: &str) -> &str {
         let mut n = input.len();
         let left = input
@@ -74,12 +56,20 @@ pub fn reduce_type_name(mut input: &str) -> &str {
 
 pub trait TypeName {
     fn type_name(&self) -> &'static str {
-        type_name_val(&self)
+        #[allow(dead_code)]
+        fn ty<T>(_ignored: &T) -> &'static str {
+            reduce_type_name(type_name::<T>())
+        }
+        ty(&self)
     }
 }
 
 impl<T> TypeName for T {}
 
+/// Error type that isn't an error, but isn't a successful value
+///
+/// When this is returned by a handler, the 'error' won't be logged or treated
+/// like an error
 #[derive(Debug)]
 pub struct DontCareSigil {}
 
@@ -100,10 +90,18 @@ impl<T> DontCare<T> for Option<T> {
     }
 }
 
+/// Helper function for creating an Err(DontCareSigil)
 pub fn dont_care() -> anyhow::Result<()> {
     Err(DontCareSigil {}.into())
 }
 
+/// Check the specific configuration list to see if context room is on it
+///
+/// ```ignore
+/// // if the room is on the whitelist, this will return Ok
+/// check_config(&mut context, |config: Shakespeare| config.whitelist)?;
+/// ```
+// TODO rename this function
 pub async fn check_config<T, F, C, I>(context: &mut Context<T>, func: F) -> anyhow::Result<()>
 where
     T: RespondableContext,

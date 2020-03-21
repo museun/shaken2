@@ -146,14 +146,25 @@ fn handle_verify() -> (Config, DefaultTemplateStore) {
         },
     );
 
+    fn print_backtrace(error: anyhow::Error) {
+        for (i, cause) in error.chain().enumerate() {
+            if i > 0 {
+                eprintln!();
+                eprintln!("because");
+                eprint!("  ");
+            }
+            eprintln!("{}", cause);
+        }
+    }
+
     match (config, templates) {
         (Ok(config), Ok(templates)) => (config, templates),
         (left, right) => {
             if let Err(err) = left {
-                crate::util::print_backtrace(err)
+                print_backtrace(err)
             }
             if let Err(err) = right {
-                crate::util::print_backtrace(err)
+                print_backtrace(err)
             }
             exit(1)
         }
