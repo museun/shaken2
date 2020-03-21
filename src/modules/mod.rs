@@ -4,30 +4,53 @@ type Result = anyhow::Result<()>;
 
 pub struct ModuleInit<'a, R> {
     pub config: &'a Config,
-    pub command_map: &'a mut CommandMap<R>,
-    pub passive_list: &'a mut PassiveList<R>,
-    pub state: &'a mut State,
     pub secrets: &'a mut crate::secrets::Secrets,
+
+    pub state: State,
+    pub command_map: CommandMap<R>,
+    pub passive_list: PassiveList<R>,
+
+    _responder: std::marker::PhantomData<R>,
 }
 
 impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
-    pub async fn initialize(&mut self) -> anyhow::Result<()> {
-        shakespeare::initialize(self).await;
-        hello::initialize(self).await;
-        uptime::initialize(self).await;
-        viewers::initialize(self).await;
-        crates::initialize(self).await;
-        version::initialize(self).await;
-        whatsong::initialize(self).await;
+    pub fn new(config: &'a Config, secrets: &'a mut crate::secrets::Secrets) -> Self {
+        let (command_map, passive_list, state, _responder) = Default::default();
+        Self {
+            config,
+            secrets,
 
-        // this has to be at the end so it won't clobber the built-in commands
-        // user_defined::initialize(self).await;
+            command_map,
+            passive_list,
+            state,
+            _responder,
+        }
+    }
 
+    pub async fn initialize(mut self) -> anyhow::Result<(State, CommandMap<R>, PassiveList<R>)> {
+        // TODO split this off into its own function
         let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
         let client = crate::twitch::Client::new(&twitch_client_id);
         self.state.insert(client);
 
-        Ok(())
+        shakespeare::initialize(&mut self).await;
+        hello::initialize(&mut self).await;
+        uptime::initialize(&mut self).await;
+        viewers::initialize(&mut self).await;
+        crates::initialize(&mut self).await;
+        version::initialize(&mut self).await;
+        whatsong::initialize(&mut self).await;
+
+        // this has to be at the end so it won't clobber the built-in commands
+        // user_defined::initialize(self).await;
+
+        let Self {
+            state,
+            command_map,
+            passive_list,
+            ..
+        } = self;
+        Ok((state, command_map, passive_list))
     }
 }
 

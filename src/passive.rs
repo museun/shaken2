@@ -50,26 +50,39 @@ impl RespondableContext for Passive {
     }
 }
 
+#[derive(Clone)]
+pub struct WrappedPassive<R> {
+    pub inner: Arc<DynHandler<Passive, R>>,
+    pub id: usize,
+}
+
+impl<R> std::fmt::Debug for WrappedPassive<R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WrappedPassive")
+            .field("id", &self.id)
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub struct PassiveList<R> {
     inner: Vec<WrappedPassive<R>>,
     id: usize,
-    responder: R,
+    _phantom: std::marker::PhantomData<R>,
 }
 
-impl<R> PassiveList<R>
-where
-    R: Responder + Send + 'static,
-{
-    pub fn new(responder: R) -> Self {
-        let (inner, id) = Default::default();
+impl<R: Responder + Send + 'static> Default for PassiveList<R> {
+    fn default() -> Self {
+        let (inner, id, _phantom) = Default::default();
         Self {
             inner,
             id,
-            responder,
+            _phantom,
         }
     }
+}
 
+impl<R: Responder + Send + 'static> PassiveList<R> {
     pub fn add<H, F>(&mut self, handler: H) -> usize
     where
         H: Handler<Passive, R, Fut = F>,
@@ -84,10 +97,6 @@ where
             id,
         });
         id
-    }
-
-    pub fn responder(&self) -> R {
-        self.responder.clone()
     }
 
     pub fn remove(&mut self, id: usize) -> Option<()> {
@@ -115,19 +124,5 @@ impl<'a, R> Iterator for PassiveIter<'a, R> {
         let pos = self.pos;
         self.pos += 1;
         self.inner.inner.get(pos)
-    }
-}
-
-#[derive(Clone)]
-pub struct WrappedPassive<R> {
-    pub inner: Arc<DynHandler<Passive, R>>,
-    pub id: usize,
-}
-
-impl<R> std::fmt::Debug for WrappedPassive<R> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("WrappedPassive")
-            .field("id", &self.id)
-            .finish()
     }
 }

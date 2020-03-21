@@ -91,22 +91,21 @@ impl<R> std::fmt::Debug for WrappedCommand<R> {
 pub struct CommandMap<R> {
     inner: Vec<WrappedCommand<R>>,
     id: usize,
-    responder: R,
+    _phantom: std::marker::PhantomData<R>,
 }
 
-impl<R> CommandMap<R>
-where
-    R: Responder + Send + 'static,
-{
-    pub fn new(responder: R) -> Self {
-        let (inner, id) = Default::default();
+impl<R: Responder + Send + 'static> Default for CommandMap<R> {
+    fn default() -> Self {
+        let (inner, id, _phantom) = Default::default();
         Self {
             inner,
             id,
-            responder,
+            _phantom,
         }
     }
+}
 
+impl<R: Responder + Send + 'static> CommandMap<R> {
     pub fn add<H, F>(&mut self, trigger: impl ToString, handler: H) -> usize
     where
         H: Handler<Command, R, Fut = F>,
@@ -121,10 +120,6 @@ where
         self.id += 1;
         self.inner.push(WrappedCommand { inner, trigger, id });
         id
-    }
-
-    pub fn responder(&self) -> R {
-        self.responder.clone()
     }
 
     pub fn command_names(&self) -> impl Iterator<Item = Arc<str>> + '_ {

@@ -41,7 +41,7 @@ where
         }
     }
 
-    pub async fn run(mut self, state: State) -> anyhow::Result<()> {
+    pub async fn run(mut self, responder: R, state: State) -> anyhow::Result<()> {
         let mut writer = self.control.writer().clone();
 
         let config = self.config.clone();
@@ -63,17 +63,26 @@ where
             color
         );
 
-        let tracker = Tracker::new();
         let user_id = user_id.parse().expect("our userid must be a u64");
+
+        let tracker = Tracker::new();
         tracker
             .users
             .set(user_id, display_name.as_ref().unwrap())
             .await;
+
         let state = Arc::new(RwLock::new(state));
 
         tokio::pin! {
+            let tracked_fut = TrackedEvents::new(
+                tracker.clone(),
+                &self.dispatcher,
+            )
+            .run_to_completion();
+
             let active = self.dispatch_actives(
                 user_id,
+                responder.clone(),
                 tracker.clone(),
                 state.clone(),
                 config.clone(),
@@ -81,16 +90,11 @@ where
 
             let passive = self.dispatch_passives(
                 user_id,
-                tracker.clone(),
+                responder,
+                tracker,
                 state,
-                config.clone()
+                config,
             );
-
-            let tracked_fut = TrackedEvents::new(
-                tracker.clone(),
-                &self.dispatcher,
-            )
-            .run_to_completion();
         }
 
         for room in &self.config.rooms {
@@ -110,6 +114,7 @@ where
     async fn dispatch_passives(
         &self,
         user_id: u64,
+        responder: R,
         tracker: Tracker,
         state: Arc<RwLock<State>>,
         config: Config,
@@ -126,14 +131,15 @@ where
 
             for passive in self.passive_list.iter() {
                 log::trace!("dispatching to: {:?}", passive);
-                let state = state.clone();
-                let responder = self.passive_list.responder();
-                let fut = passive.inner.call(state, responder).inspect_err(|err| {
-                    if err.is::<crate::util::DontCareSigil>() {
-                        return;
-                    }
-                    log::error!("cannot run passive: {}", err);
-                });
+                let fut = passive
+                    .inner
+                    .call(state.clone(), responder.clone())
+                    .inspect_err(|err| {
+                        if err.is::<crate::util::DontCareSigil>() {
+                            return;
+                        }
+                        log::error!("cannot run passive: {}", err);
+                    });
                 tokio::spawn(fut);
             }
         }
@@ -142,6 +148,7 @@ where
     async fn dispatch_actives(
         &self,
         user_id: u64,
+        responder: R,
         tracker: Tracker,
         state: Arc<RwLock<State>>,
         config: Config,
@@ -160,11 +167,13 @@ where
 
                 for command in self.command_map.find(&*cmd.head) {
                     log::info!("dispatching to: {:?}", command);
-                    let state = state.clone();
-                    let responder = self.command_map.responder();
-                    let fut = command.inner.call(state, responder).inspect_err(|err| {
-                        log::error!("cannot run command: {}", err);
-                    });
+
+                    let fut = command
+                        .inner
+                        .call(state.clone(), responder.clone())
+                        .inspect_err(|err| {
+                            log::error!("cannot run command: {}", err);
+                        });
                     tokio::spawn(fut);
                 }
             }

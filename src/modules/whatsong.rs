@@ -26,7 +26,6 @@ where
     init.command_map.add("previous", previous_song);
 
     let config = &init.config.whatsong.address;
-
     init.state.insert(Client::new(config));
 
     // TODO song list

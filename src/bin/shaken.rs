@@ -1,23 +1,25 @@
+use shaken::{
+    args::{self, DefaultTemplateStore},
+    config::Config,
+    database, modules, resolver,
+    secrets::{self, Secrets},
+    Bot, Directories,
+};
+
+use std::path::PathBuf;
 use twitchchat::{Dispatcher, Runner, Status};
 
-use shaken::{args, config, database, modules, resolver, secrets};
-use shaken::{Bot, CommandMap, Directories, PassiveList, State};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn initialize_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
     // this uses reverse order (least specific to most specific)
     // the last one will always override previous ones
-    let envs = &[
-        Directories::config()?.join(".env"),
-        std::path::PathBuf::from(".env"),
-    ];
-
-    config::load_env_from(envs);
+    simple_env_load::load_env_from(&[
+        Directories::config()?.join(".env"), //
+        PathBuf::from(".env"),
+    ]);
     alto_logger::init(alto_logger::Style::MultiLine, Default::default())?;
 
     // do this before the args so its a hard error
-    let mut secrets = secrets::Secrets::from_env()?;
-
+    let secrets = Secrets::from_env()?;
     let (config, templates) = args::handle_args();
 
     // TODO maybe get this from the config
@@ -28,34 +30,32 @@ async fn main() -> anyhow::Result<()> {
             .to_string_lossy(),
     );
 
+    Ok((secrets, config, templates))
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let (mut secrets, config, templates) = initialize_startup()?;
+
     let dispatcher = Dispatcher::new();
     let (runner, mut control) = Runner::new(dispatcher.clone(), Default::default());
 
-    let responder = shaken::LoggingResponder::new(shaken::WriterResponder::new(
-        control.writer().clone(),
-        resolver::new_resolver(templates)?,
-    ));
-
-    let mut commands = CommandMap::new(responder.clone());
-    let mut passives = PassiveList::new(responder);
-    let mut state = State::default();
-
-    modules::ModuleInit {
-        config: &config,
-        command_map: &mut commands,
-        passive_list: &mut passives,
-        state: &mut state,
-        secrets: &mut secrets,
-    }
-    .initialize()
-    .await?; // does this have to be async?
+    let (state, commands, passives) = modules::ModuleInit::new(&config, &mut secrets)
+        .initialize()
+        .await?; // TODO does this have to be async?
 
     // connect to twitch
     let conn = twitchchat::connect_easy_tls(
         &config.user_name,
-        &secrets.take(crate::secrets::TWITCH_OAUTH_TOKEN)?,
+        &secrets.take(secrets::TWITCH_OAUTH_TOKEN)?,
     )
     .await?;
+
+    let responder = shaken::WriterResponder::new(
+        control.writer().clone(), //
+        resolver::new_resolver(templates)?,
+    );
+    let responder = shaken::LoggingResponder::new(responder);
 
     let bot = Bot::new(
         config,     //
@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         commands,   //
         passives,   //
     )
-    .run(state);
+    .run(responder, state);
 
     // TODO maybe join instead of select
     tokio::select! {

@@ -71,8 +71,7 @@ mod bot;
 pub use bot::Bot;
 
 mod command;
-use command::Command;
-pub use command::CommandMap;
+use command::{Command, CommandMap};
 
 pub mod config;
 use config::Config;
@@ -100,8 +99,7 @@ mod name_and_id;
 use name_and_id::NameAndId;
 
 mod passive;
-use passive::Passive;
-pub use passive::PassiveList;
+use passive::{Passive, PassiveList};
 
 pub mod resolver;
 use resolver::Resolver;
@@ -116,7 +114,7 @@ use room::Room;
 mod serde_util;
 
 mod state;
-pub use state::State;
+use state::State;
 
 mod tracker;
 use tracker::Tracker;

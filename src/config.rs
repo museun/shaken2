@@ -58,23 +58,3 @@ impl Config {
         Ok(this)
     }
 }
-
-fn parse_and_set(data: &str, set: fn(k: &str, v: &str)) {
-    data.lines()
-        .filter_map(|s| Some(s.trim()).filter(|s| !s.starts_with('#')))
-        .map(|s| {
-            s.splitn(2, '=')
-                .filter_map(|s| Some(s.trim()).filter(|s| !s.is_empty()))
-        })
-        .flat_map(|mut iter| Some((iter.next()?, iter.next()?)))
-        .for_each(|(k, v)| set(k, &v.replace('"', "")))
-}
-
-pub fn load_env_from<I: IntoIterator<Item = T>, T: AsRef<std::path::Path>>(paths: I) {
-    for data in paths
-        .into_iter()
-        .flat_map(|path| std::fs::read_to_string(path).ok())
-    {
-        parse_and_set(&data, |k, v| std::env::set_var(&k, &v))
-    }
-}

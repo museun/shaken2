@@ -6,7 +6,7 @@ use template::{FileStore, MemoryStore, PartialStore};
 use std::path::{Path, PathBuf};
 use std::process::exit;
 
-type DefaultTemplateStore = PartialStore<MemoryStore, Option<FileStore>>;
+pub type DefaultTemplateStore = PartialStore<MemoryStore, Option<FileStore>>;
 
 static HELP_MESSAGE: &str = "
 flags:

@@ -1519,6 +1519,7 @@ dependencies = [
  "serde",
  "serde_cbor",
  "serde_json",
+ "simple_env_load",
  "template",
  "time 0.2.9",
  "tokio",
@@ -1535,6 +1536,12 @@ dependencies = [
  "arc-swap",
  "libc",
 ]
+
+[[package]]
+name = "simple_env_load"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56df1c101a8edd1aa4f4296fa4996b651e561b3ddde4c75f680654578b2bb339"
 
 [[package]]
 name = "slab"
