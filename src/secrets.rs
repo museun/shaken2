@@ -23,14 +23,14 @@ impl Secrets {
     }
 
     pub fn from_env() -> anyhow::Result<Self> {
-        const DESIRED: &[&'static str] = &[TWITCH_OAUTH_TOKEN, TWITCH_CLIENT_ID];
+        const DESIRED: &[&str] = &[TWITCH_OAUTH_TOKEN, TWITCH_CLIENT_ID];
 
         fn expect_env_var(var: &str) -> anyhow::Result<String> {
             std::env::var(var).with_context(|| format!("`{}` must be set", var))
         }
 
         let mut map: HashMap<_, Option<_>> = HashMap::default();
-        for desired in DESIRED {
+        for &desired in DESIRED {
             let item = match expect_env_var(desired) {
                 Err(err) => {
                     eprintln!("Error: {}", err);

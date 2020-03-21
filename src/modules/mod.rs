@@ -28,10 +28,7 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
     }
 
     pub fn initialize(mut self) -> anyhow::Result<(State, CommandMap<R>, PassiveList<R>)> {
-        // TODO split this off into its own function
-        let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
-        let client = crate::twitch::Client::new(&twitch_client_id);
-        self.state.insert(client);
+        self.build_state()?;
 
         shakespeare::initialize(&mut self);
         hello::initialize(&mut self);
@@ -51,6 +48,16 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
             ..
         } = self;
         Ok((state, command_map, passive_list))
+    }
+
+    fn build_state(&mut self) -> anyhow::Result<()> {
+        // place the state deps here if you need them initialize before any of
+        // the modules
+        let twitch_client_id = self.secrets.take(crate::secrets::TWITCH_CLIENT_ID)?;
+        let client = crate::twitch::Client::new(&twitch_client_id);
+        self.state.insert(client);
+
+        Ok(())
     }
 }
 
