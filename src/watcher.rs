@@ -1,3 +1,5 @@
+#![cfg_attr(debug_assertions, allow(dead_code, unused_variables))]
+
 use futures::{future::BoxFuture, stream::FuturesUnordered};
 use notify::{event::Event, Watcher as _};
 use std::path::Path;

@@ -104,7 +104,7 @@ impl Client {
     }
 
     async fn current(&self) -> anyhow::Result<Option<(u64, Song)>> {
-        let now = crate::util::timestamp() as u64;
+        let now = crate::util::timestamp();
 
         let song: Song = self
             .client
@@ -116,7 +116,7 @@ impl Client {
             .await?;
 
         Ok(Some(now - song.timestamp)
-            .filter(|&ts| song.duration <= ts)
+            .filter(|&ts| song.duration <= now - ts)
             .map(|ts| (ts, song)))
     }
 

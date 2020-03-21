@@ -65,7 +65,7 @@ pub use twitch::Client as TwitchClient;
 mod user;
 use user::User;
 
-mod util;
+pub mod util;
 use util::{dont_care, DontCare as _};
 
 mod watcher;
