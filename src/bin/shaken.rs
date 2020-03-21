@@ -9,7 +9,7 @@ use shaken::{
 use std::path::PathBuf;
 use twitchchat::{Dispatcher, Runner, Status};
 
-fn initialize_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
+fn handle_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
     // this uses reverse order (least specific to most specific)
     // the last one will always override previous ones
     simple_env_load::load_env_from(&[
@@ -35,13 +35,23 @@ fn initialize_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let (mut secrets, config, templates) = initialize_startup()?;
+    let (mut secrets, config, templates) = handle_startup()?;
 
+    // initialize all of the modules
+    let (state, commands, passives) =
+        modules::ModuleInit::new(&config, &mut secrets).initialize()?;
+
+    // create required twitchchat stuff
     let dispatcher = Dispatcher::new();
     let (runner, mut control) = Runner::new(dispatcher.clone(), Default::default());
 
-    let (state, commands, passives) =
-        modules::ModuleInit::new(&config, &mut secrets).initialize()?;
+    // create a responder
+    let responder = shaken::WriterResponder::new(
+        control.writer().clone(), //
+        resolver::new_resolver(templates)?,
+    );
+    // and make it log its actions
+    let responder = shaken::LoggingResponder::new(responder);
 
     // connect to twitch
     let conn = twitchchat::connect_easy_tls(
@@ -50,23 +60,19 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-    let responder = shaken::WriterResponder::new(
-        control.writer().clone(), //
-        resolver::new_resolver(templates)?,
-    );
-    let responder = shaken::LoggingResponder::new(responder);
-
+    // create the bot future
     let bot = Bot::new(
-        config,     //
-        control,    //
-        dispatcher, //
-        commands,   //
-        passives,   //
+        config,     // the bot configuration // TODO: make this 'reactive' (use the 'watch' module)
+        control,    // the control interface
+        dispatcher, // the event dispatcher
+        commands,   // the command map
+        passives,   // the passive list
     )
-    .run(responder, state);
+    .run(responder, state); // run the bot with this responder and this initial state
 
     // TODO maybe join instead of select
     tokio::select! {
+        // run the twitchchat loop to completion
         status = runner.run(conn) => {
             match status.map_err(|err| {
                 log::error!("error running: {}", err);
@@ -76,6 +82,7 @@ async fn main() -> anyhow::Result<()> {
                 Status::Eof => log::info!("runner ended"),
             }
         }
+        // run the bot loop to completion
         result = bot => {
             if let Err(err) = result {
                 log::error!("error running bot: {}", err);
