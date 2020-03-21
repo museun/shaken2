@@ -2,6 +2,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 type BoxResolver = template::Resolver<Box<dyn template::TemplateStore + Send>>;
+
 pub type Resolver = Arc<Mutex<BoxResolver>>;
 
 pub fn new_resolver<S>(store: S) -> anyhow::Result<Resolver>

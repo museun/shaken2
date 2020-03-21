@@ -73,7 +73,7 @@ impl Watcher {
         self.watched
             .for_each(|res| async move {
                 if let Err(err) = res {
-                    log::error!("runner ran into an error: {}", err)
+                    log::error!("watcher ran into an error: {}", err)
                 }
             })
             .await;

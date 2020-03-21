@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 pub trait NameAndId {
     fn name(&self) -> Cow<'_, str>;
+
     fn id(&self) -> u64;
 
     fn check_list<I>(&self, mut collection: I) -> anyhow::Result<()>

@@ -1,4 +1,4 @@
-use crate::serde_util;
+use crate::util::serde as serde_util;
 use serde::{Deserialize, Serialize};
 
 // A clonable Twitch API client

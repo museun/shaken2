@@ -12,7 +12,7 @@ impl std::fmt::Display for DontCareSigil {
 }
 impl std::error::Error for DontCareSigil {}
 
-/// Trait to create an 'Err(DontCareSigil)' from a None/Err
+/// Trait to create an `Err(DontCareSigil)` from a None/Err
 pub trait DontCare<T> {
     fn dont_care(self) -> anyhow::Result<T>;
 }
@@ -23,7 +23,7 @@ impl<T> DontCare<T> for Option<T> {
     }
 }
 
-/// Helper function for creating an Err(DontCareSigil)
+/// Helper function for creating an `Err(DontCareSigil)`
 pub fn dont_care() -> anyhow::Result<()> {
     Err(DontCareSigil {}.into())
 }

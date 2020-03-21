@@ -1,5 +1,7 @@
 use ::serde::{Deserialize, Serialize};
 
+/// Get a json body with the provided headers and query
+#[allow(dead_code)]
 pub async fn get_json_with_headers<'a, T, U, H, I, Q>(
     url: U,
     headers: H,
@@ -28,6 +30,7 @@ where
     .await
 }
 
+/// Get a json body with the provided query
 pub async fn get_json<'a, T, U, I, Q>(url: U, query: I) -> anyhow::Result<T>
 where
     for<'de> T: Deserialize<'de>,

@@ -33,7 +33,7 @@ async fn crates<R>(context: Context<Command>, mut responder: R) -> Result
 where
     R: Responder + Send + 'static,
 {
-    let arg = match context.args().tail.get(0) {
+    let arg = match context.args.tail.get(0) {
         Some(arg) => arg.to_string(),
         None => return responder.reply(&context, &Response::NoCrate).await,
     };

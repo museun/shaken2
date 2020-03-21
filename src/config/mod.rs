@@ -1,6 +1,17 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::path::Path;
+
+mod directories;
+pub use directories::*;
+
+pub mod secrets;
+pub use secrets::Secrets;
+
+mod whatsong;
+pub use whatsong::WhatSong;
+
+mod shakespeare;
+pub use shakespeare::Shakespeare;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -8,21 +19,6 @@ pub struct Config {
     pub rooms: Vec<String>,
     pub shakespeare: Shakespeare,
     pub whatsong: WhatSong,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Shakespeare {
-    pub whitelist: HashSet<String>,
-    pub address: String,
-    pub chance: f32,
-    pub quiet: u64,
-    pub interval: u64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WhatSong {
-    pub whitelist: HashSet<String>,
-    pub address: String,
 }
 
 impl Config {

@@ -4,11 +4,12 @@ use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct Context<Args> {
+    pub args: Args,
+    pub tracker: Tracker,
+    pub config: Config, // TODO use a watch here
+
     user_id: u64,
-    args: Args,
-    tracker: Tracker,
     state: Arc<RwLock<State>>,
-    config: Config, // TODO use a watch here
 }
 
 impl<Args> Context<Args> {
@@ -36,10 +37,6 @@ impl<Args> Context<Args> {
             .expect("our username must be tracked")
     }
 
-    pub fn tracker(&mut self) -> &mut Tracker {
-        &mut self.tracker
-    }
-
     pub async fn with_state<F, T>(&self, func: F) -> T
     where
         F: Fn(tokio::sync::RwLockReadGuard<'_, State>) -> T,
@@ -54,10 +51,6 @@ impl<Args> Context<Args> {
     pub async fn state_mut(&mut self) -> tokio::sync::RwLockWriteGuard<'_, State> {
         self.state.write().await
     }
-
-    pub const fn args(&self) -> &Args {
-        &self.args
-    }
 }
 
 macro_rules! common_short_hand {
@@ -65,15 +58,15 @@ macro_rules! common_short_hand {
         $(
             impl Context<crate::$ty> {
                 pub fn data(&self) -> &str {
-                    &*self.args().message.data
+                    &*self.args.message.data
                 }
 
                 pub fn user(&self) -> User<'_> {
-                    self.args().user()
+                    self.args.user()
                 }
 
                 pub fn room(&self) -> Room<'_> {
-                    self.args().room()
+                    self.args.room()
                 }
 
                 pub fn user_and_room(&self) -> (User<'_>, Room<'_>) {
