@@ -1,40 +1,39 @@
-use crate::{Config, RespondableContext, Room, State, Tracker, User};
+use crate::{Config, RespondableContext, Room, State, User};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+pub type ShakenInfo = twitchchat::messages::GlobalUserState<'static>;
 
 #[derive(Clone)]
 pub struct Context<Args> {
     pub args: Args,
-    pub tracker: Tracker,
     pub config: Config, // TODO use a watch here
-
-    user_id: u64,
     state: Arc<RwLock<State>>,
 }
 
 impl<Args> Context<Args> {
-    pub(super) fn new(
-        user_id: u64,
-        args: Args,
-        tracker: Tracker,
-        state: Arc<RwLock<State>>,
-        config: Config,
-    ) -> Self {
+    pub(super) fn new(args: Args, state: Arc<RwLock<State>>, config: Config) -> Self {
         Self {
-            user_id,
-            tracker,
             args,
-            state,
             config,
+            state,
         }
     }
 
-    pub async fn get_our_name(&self) -> String {
-        self.tracker
-            .users
-            .get(self.user_id)
-            .await
-            .expect("our username must be tracked")
+    pub async fn get_our_user(&self) -> crate::User<'_> {
+        let state = self.state().await;
+        let info = state
+            .expect_get::<ShakenInfo>()
+            .expect("this must always be valid");
+
+        crate::User {
+            name: info
+                .display_name
+                .as_ref()
+                .expect("display name must be set")
+                .clone(),
+            id: info.user_id.parse().expect("twitch to have valid types"),
+        }
     }
 
     pub async fn with_state<F, T>(&self, func: F) -> T

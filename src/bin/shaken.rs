@@ -1,7 +1,7 @@
 use shaken::{
     args::{self, DefaultTemplateStore},
     config::Config,
-    database, modules, resolver,
+    modules, resolver,
     secrets::{self, Secrets},
     Bot, Directories,
 };
@@ -22,14 +22,6 @@ fn handle_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
     let secrets = Secrets::from_env()?;
     let (config, templates) = args::handle_args();
 
-    // TODO maybe get this from the config
-    database::initialize_db_conn_string(
-        Directories::data()?
-            .join("database.db")
-            .into_os_string()
-            .to_string_lossy(),
-    );
-
     Ok((secrets, config, templates))
 }
 
@@ -37,9 +29,27 @@ fn handle_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
 async fn main() -> anyhow::Result<()> {
     let (mut secrets, config, templates) = handle_startup()?;
 
+    let db_file = Directories::data()?.join("shaken.db");
+
+    let pool = sqlx::SqlitePool::new(db_file.to_string_lossy().to_string().as_str())
+        .await
+        .unwrap();
+
     // initialize all of the modules
-    let (state, commands, passives) =
-        modules::ModuleInit::new(&config, &mut secrets).initialize()?;
+    let modules::ModuleInit {
+        mut state,
+        command_map: commands,
+        passive_list: passives,
+        pool,
+        ..
+    } = modules::ModuleInit::initialize(
+        &config,      // bot configuration
+        &mut secrets, // secret store
+        pool,
+    )
+    .await?;
+
+    state.insert(pool);
 
     // create required twitchchat stuff
     let dispatcher = Dispatcher::new();

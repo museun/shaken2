@@ -1,3 +1,5 @@
+#![cfg_attr(debug_assertions, allow(dead_code))]
+
 #[macro_use]
 mod macros;
 
@@ -16,8 +18,8 @@ mod context;
 use context::Context;
 
 mod store;
-pub use store::{database, resolver};
-use store::{Resolver, State, Tracker};
+pub use store::resolver;
+use store::{Resolver, State};
 
 mod format;
 pub use format::Timestamp;
@@ -35,7 +37,7 @@ use name_and_id::NameAndId;
 
 mod responder;
 
-pub use responder::{LoggingResponder, WriterResponder};
+pub use responder::{LoggingResponder, NullResponder, WriterResponder};
 use responder::{RespondableContext, Responder};
 
 mod room;

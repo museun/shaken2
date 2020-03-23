@@ -1,13 +1,10 @@
-use std::collections::HashSet;
 use std::sync::Arc;
 
-use super::{
-    Command, CommandMap, Config, Context, Passive, PassiveList, Responder, State, Tracker,
-};
+use super::{Command, CommandMap, Config, Context, Passive, PassiveList, Responder, State};
 
 use futures::prelude::*;
 use tokio::sync::RwLock;
-use twitchchat::{events, messages, Control, Dispatcher, EventStream};
+use twitchchat::{events, messages, Control, Dispatcher};
 
 pub struct Bot<R: Responder + Send + 'static> {
     control: Control,
@@ -41,20 +38,21 @@ where
         }
     }
 
-    pub async fn run(mut self, responder: R, state: State) -> anyhow::Result<()> {
+    pub async fn run(mut self, responder: R, mut state: State) -> anyhow::Result<()> {
         let mut writer = self.control.writer().clone();
-
         let config = self.config.clone();
+
+        let info = self
+            .dispatcher
+            .wait_for::<events::GlobalUserState>()
+            .await?;
 
         let messages::GlobalUserState {
             user_id,
             display_name,
             color,
             ..
-        } = &*self
-            .dispatcher
-            .wait_for::<events::GlobalUserState>()
-            .await?;
+        } = &*info;
 
         log::info!(
             "our user: {} ({}) {}",
@@ -62,37 +60,20 @@ where
             user_id,
             color
         );
-
-        let user_id = user_id.parse().expect("our userid must be a u64");
-
-        let tracker = Tracker::new();
-        tracker
-            .users
-            .set(user_id, display_name.as_ref().unwrap())
-            .await;
+        state.insert(info);
 
         let state = Arc::new(RwLock::new(state));
 
         tokio::pin! {
-            let tracked_fut = TrackedEvents::new(
-                tracker.clone(),
-                &self.dispatcher,
-            )
-            .run_to_completion();
-
             let active = self.dispatch_actives(
-                user_id,
                 responder.clone(),
-                tracker.clone(),
                 state.clone(),
                 config.clone(),
             );
 
             let passive = self.dispatch_passives(
-                user_id,
                 responder,
-                tracker,
-                state,
+                state.clone(),
                 config,
             );
         }
@@ -103,7 +84,6 @@ where
         }
 
         tokio::select! {
-            _ = &mut tracked_fut => { }
             _ = &mut active => { }
             _ = &mut passive => { }
         }
@@ -111,24 +91,10 @@ where
         Ok(())
     }
 
-    async fn dispatch_passives(
-        &self,
-        user_id: u64,
-        responder: R,
-        tracker: Tracker,
-        state: Arc<RwLock<State>>,
-        config: Config,
-    ) {
+    async fn dispatch_passives(&self, responder: R, state: Arc<RwLock<State>>, config: Config) {
         let mut passive = self.dispatcher.subscribe::<events::Privmsg>();
         while let Some(passive) = passive.next().await.and_then(Passive::new) {
-            let state = Context::new(
-                user_id,
-                passive,
-                tracker.clone(),
-                Arc::clone(&state),
-                config.clone(),
-            );
-
+            let state = Context::new(passive, Arc::clone(&state), config.clone());
             for passive in self.passive_list.iter() {
                 log::trace!("dispatching to: {:?}", passive);
                 let fut = passive
@@ -145,42 +111,34 @@ where
         }
     }
 
-    async fn dispatch_actives(
-        &self,
-        user_id: u64,
-        responder: R,
-        tracker: Tracker,
-        state: Arc<RwLock<State>>,
-        config: Config,
-    ) {
+    async fn dispatch_actives(&self, responder: R, state: Arc<RwLock<State>>, config: Config) {
         let mut active = self.dispatcher.subscribe::<events::Privmsg>();
         while let Some(msg) = active.next().await {
             log::info!("[{}] {}: {}", msg.channel, msg.name, msg.data);
-            if let Some(cmd) = Command::parse(Arc::clone(&msg)) {
-                let state = Context::new(
-                    user_id,
-                    cmd.clone(),
-                    tracker.clone(),
-                    Arc::clone(&state),
-                    config.clone(),
-                );
+            let cmd = match Command::parse(Arc::clone(&msg)) {
+                Some(cmd) => cmd,
+                None => continue,
+            };
 
-                for command in self.command_map.find(&*cmd.head) {
-                    log::info!("dispatching to: {:?}", command);
-
-                    let fut = command
-                        .inner
-                        .call(state.clone(), responder.clone())
-                        .inspect_err(|err| {
-                            log::error!("cannot run command: {}", err);
-                        });
-                    tokio::spawn(fut);
-                }
+            let state = Context::new(cmd.clone(), Arc::clone(&state), config.clone());
+            for command in self.command_map.find(&*cmd.head) {
+                log::info!("dispatching to: {:?}", command);
+                let fut = command
+                    .inner
+                    .call(state.clone(), responder.clone())
+                    .inspect_err(|err| {
+                        if err.is::<crate::util::DontCareSigil>() {
+                            return;
+                        }
+                        log::error!("cannot run command: {}", err);
+                    });
+                tokio::spawn(fut);
             }
         }
     }
 }
 
+/*
 struct TrackedEvents {
     tracker: Tracker,
 
@@ -238,3 +196,4 @@ impl TrackedEvents {
         }
     }
 }
+*/

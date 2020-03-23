@@ -5,6 +5,7 @@ type Result = anyhow::Result<()>;
 pub struct ModuleInit<'a, R> {
     pub config: &'a Config,
     pub secrets: &'a mut crate::secrets::Secrets,
+    pub pool: sqlx::SqlitePool,
 
     pub state: State,
     pub command_map: CommandMap<R>,
@@ -14,40 +15,36 @@ pub struct ModuleInit<'a, R> {
 }
 
 impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
-    pub fn new(config: &'a Config, secrets: &'a mut crate::secrets::Secrets) -> Self {
+    pub async fn initialize(
+        config: &'a Config,
+        secrets: &'a mut crate::secrets::Secrets,
+        pool: sqlx::SqlitePool,
+    ) -> anyhow::Result<ModuleInit<'a, R>> {
         let (command_map, passive_list, state, _responder) = Default::default();
-        Self {
+        let mut this = ModuleInit {
             config,
             secrets,
-
+            pool,
             command_map,
             passive_list,
             state,
             _responder,
-        }
-    }
+        };
 
-    pub fn initialize(mut self) -> anyhow::Result<(State, CommandMap<R>, PassiveList<R>)> {
-        self.build_state()?;
+        this.build_state()?;
 
-        shakespeare::initialize(&mut self);
-        hello::initialize(&mut self);
-        uptime::initialize(&mut self);
-        viewers::initialize(&mut self);
-        crates::initialize(&mut self);
-        version::initialize(&mut self);
-        whatsong::initialize(&mut self);
+        shakespeare::initialize(&mut this).await;
+        hello::initialize(&mut this).await;
+        uptime::initialize(&mut this).await;
+        viewers::initialize(&mut this).await;
+        crates::initialize(&mut this).await;
+        version::initialize(&mut this).await;
+        whatsong::initialize(&mut this).await;
 
         // this has to be at the end so it won't clobber the built-in commands
-        // user_defined::initialize(self);
+        user_defined::initialize(&mut this).await?;
 
-        let Self {
-            state,
-            command_map,
-            passive_list,
-            ..
-        } = self;
-        Ok((state, command_map, passive_list))
+        Ok(this)
     }
 
     fn build_state(&mut self) -> anyhow::Result<()> {

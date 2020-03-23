@@ -3,6 +3,10 @@ pub fn type_name<T>() -> &'static str {
     reduce_type_name(std::any::type_name::<T>())
 }
 
+pub fn type_name_of<T>(_ignored: &T) -> &'static str {
+    std::any::type_name::<T>()
+}
+
 /// Tries to reduce a complex type name down to its base type
 pub fn reduce_type_name(mut input: &str) -> &str {
     // this is .. totally not something you should do

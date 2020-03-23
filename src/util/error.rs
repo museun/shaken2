@@ -23,6 +23,12 @@ impl<T> DontCare<T> for Option<T> {
     }
 }
 
+impl<T, E> DontCare<T> for Result<T, E> {
+    fn dont_care(self) -> anyhow::Result<T> {
+        self.map_err(|_err| DontCareSigil {}.into())
+    }
+}
+
 /// Helper function for creating an `Err(DontCareSigil)`
 pub fn dont_care() -> anyhow::Result<()> {
     Err(DontCareSigil {}.into())

@@ -11,7 +11,7 @@ enum Response<'a> {
     Shakespeare { data: &'a str },
 }
 
-pub fn initialize<R>(init: &mut ModuleInit<'_, R>)
+pub async fn initialize<R>(init: &mut ModuleInit<'_, R>)
 where
     R: Responder + Send + 'static,
 {
@@ -62,8 +62,9 @@ where
     use config::Shakespeare as C;
     crate::util::check_config(&mut context, |conf: C| conf.whitelist).await?;
 
-    let name = context.get_our_name().await;
-    let force = context.data().starts_with(&format!("@{}", name));
+    let user = context.get_our_user().await;
+    // TODO make this a regex or do some case folding
+    let force = context.data().starts_with(&format!("@{}", user.name));
 
     let data = {
         let cache = &mut *context.state_mut().await;

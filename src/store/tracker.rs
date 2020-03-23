@@ -1,10 +1,13 @@
-use super::kv::KeyValueStore;
-use std::sync::{Arc, Mutex};
+// use super::kv::KeyValueStore;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Clone)]
 pub struct Tracker {
-    pub users: Map,
-    pub rooms: Map,
+    pub users: todo!(),
+    pub rooms: todo!(),
 }
 
 impl Default for Tracker {
@@ -16,15 +19,16 @@ impl Default for Tracker {
 impl Tracker {
     pub fn new() -> Self {
         Self {
-            users: Map::new("user_id_mappings"),
-            rooms: Map::new("room_id_mappings"),
+            users: todo!(),
+            rooms: todo!(),
         }
     }
 }
 
+/*
 #[derive(Clone)]
 pub struct Map {
-    kv: Arc<Mutex<KeyValueStore<'static>>>,
+     kv: Arc<Mutex<KeyValueStore<'static>>>,
 }
 
 impl Map {
@@ -76,3 +80,4 @@ impl Map {
         .unwrap();
     }
 }
+*/

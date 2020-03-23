@@ -12,6 +12,9 @@ pub use logging::LoggingResponder;
 mod writer;
 pub use writer::WriterResponder;
 
+mod null;
+pub use null::NullResponder;
+
 pub trait RespondableContext {
     fn room(&self) -> Room<'_>;
     fn user(&self) -> User<'_>;

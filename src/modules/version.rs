@@ -10,7 +10,7 @@ enum Response<'a> {
     },
 }
 
-pub fn initialize<R>(init: &mut ModuleInit<'_, R>)
+pub async fn initialize<R>(init: &mut ModuleInit<'_, R>)
 where
     R: Responder + Send + 'static,
 {

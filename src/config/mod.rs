@@ -16,6 +16,7 @@ pub use shakespeare::Shakespeare;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub user_name: String,
+    pub owners: Vec<String>,
     pub rooms: Vec<String>,
     pub shakespeare: Shakespeare,
     pub whatsong: WhatSong,
@@ -25,24 +26,10 @@ impl Config {
     pub fn write_default(path: &Path) -> anyhow::Result<()> {
         let default = Self {
             user_name: "shaken_bot".into(),
+            owners: vec!["museun".into()],
             rooms: vec!["#museun".into()],
-            shakespeare: Shakespeare {
-                whitelist: vec!["museun"]
-                    .into_iter()
-                    .map(ToString::to_string)
-                    .collect(),
-                address: "http://localhost:9090".into(),
-                chance: 0.5,
-                quiet: 300,
-                interval: 30,
-            },
-            whatsong: WhatSong {
-                whitelist: vec!["museun"]
-                    .into_iter()
-                    .map(ToString::to_string)
-                    .collect(),
-                address: "http://localhost:58810".into(),
-            },
+            shakespeare: Default::default(),
+            whatsong: Default::default(),
         };
         std::fs::write(path, toml::to_string_pretty(&default)?)?;
         Ok(())

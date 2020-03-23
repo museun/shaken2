@@ -7,7 +7,7 @@ enum Response<'a> {
     Offline { room: &'a str },
 }
 
-pub fn initialize<R>(init: &mut ModuleInit<'_, R>)
+pub async fn initialize<R>(init: &mut ModuleInit<'_, R>)
 where
     R: Responder + Send + 'static,
 {
