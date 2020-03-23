@@ -200,7 +200,7 @@ dependencies = [
 [[package]]
 name = "client"
 version = "0.1.0"
-source = "git+https://github.com/museun/brain#4da36d7b4d11a2ba76391d428302bd872cf1b5a8"
+source = "git+https://github.com/museun/brain?rev=4da36d7b4d11a2ba76391d428302bd872cf1b5a8#4da36d7b4d11a2ba76391d428302bd872cf1b5a8"
 dependencies = [
  "reqwest",
  "serde",
@@ -873,18 +873,20 @@ dependencies = [
 [[package]]
 name = "mio"
 version = "0.6.21"
-source = "git+https://github.com/museun/mio?branch=winapi03#8c3e0c64e859f61a34a058678b8641e9c7d4b192"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "302dec22bcf6bae6dfb69c647187f4b4d0fb6f535521f7bc022430ce8e12008f"
 dependencies = [
  "cfg-if",
  "fuchsia-zircon",
  "fuchsia-zircon-sys",
  "iovec",
+ "kernel32-sys",
  "libc",
  "log",
- "miow",
+ "miow 0.2.1",
  "net2",
  "slab",
- "winapi 0.3.8",
+ "winapi 0.2.8",
 ]
 
 [[package]]
@@ -907,7 +909,7 @@ checksum = "f5e374eff525ce1c5b7687c4cef63943e7686524a387933ad27ca7ec43779cb3"
 dependencies = [
  "log",
  "mio",
- "miow",
+ "miow 0.3.3",
  "winapi 0.3.8",
 ]
 
@@ -920,6 +922,18 @@ dependencies = [
  "iovec",
  "libc",
  "mio",
+]
+
+[[package]]
+name = "miow"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c1f2f3b1cf331de6896aabf6e9d55dca90356cc9960cca7eaaf408a355ae919"
+dependencies = [
+ "kernel32-sys",
+ "net2",
+ "winapi 0.2.8",
+ "ws2_32-sys",
 ]
 
 [[package]]
@@ -1733,7 +1747,7 @@ dependencies = [
 [[package]]
 name = "template"
 version = "0.1.0"
-source = "git+https://github.com/museun/template#ece485f2a71d7b89441db54329aff541c84fe4af"
+source = "git+https://github.com/museun/template?rev=ece485f2a71d7b89441db54329aff541c84fe4af#ece485f2a71d7b89441db54329aff541c84fe4af"
 dependencies = [
  "log",
  "markings",
@@ -1745,7 +1759,7 @@ dependencies = [
 [[package]]
 name = "template_derive"
 version = "0.1.0"
-source = "git+https://github.com/museun/template#ece485f2a71d7b89441db54329aff541c84fe4af"
+source = "git+https://github.com/museun/template?rev=ece485f2a71d7b89441db54329aff541c84fe4af#ece485f2a71d7b89441db54329aff541c84fe4af"
 dependencies = [
  "heck",
  "quote",
@@ -1937,7 +1951,7 @@ dependencies = [
 [[package]]
 name = "types"
 version = "0.1.0"
-source = "git+https://github.com/museun/brain#4da36d7b4d11a2ba76391d428302bd872cf1b5a8"
+source = "git+https://github.com/museun/brain?rev=4da36d7b4d11a2ba76391d428302bd872cf1b5a8#4da36d7b4d11a2ba76391d428302bd872cf1b5a8"
 dependencies = [
  "hashbrown",
  "serde",
@@ -2160,4 +2174,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2986deb581c4fe11b621998a5e53361efe6b48a151178d0cd9eeffa4dc6acc9"
 dependencies = [
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "ws2_32-sys"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d59cefebd0c892fa2dd6de581e937301d8552cb44489cdff035c6187cb63fa5e"
+dependencies = [
+ "winapi 0.2.8",
+ "winapi-build",
 ]

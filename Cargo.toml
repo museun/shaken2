@@ -44,5 +44,5 @@ opt-level = 0
 debug = 0
 
 # !!! don't commit this
-[patch.crates-io]
-mio = { git = "https://github.com/museun/mio", branch = "winapi03" }
+#[patch.crates-io]
+#mio = { git = "https://github.com/museun/mio", branch = "winapi03" }
