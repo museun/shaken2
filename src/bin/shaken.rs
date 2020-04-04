@@ -6,7 +6,7 @@ use shaken::{
     Bot, Directories,
 };
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 use twitchchat::{Dispatcher, Runner, Status};
 
 fn handle_startup() -> anyhow::Result<(Secrets, Config, DefaultTemplateStore)> {
@@ -30,25 +30,28 @@ async fn main() -> anyhow::Result<()> {
     let (mut secrets, config, templates) = handle_startup()?;
 
     let db_file = Directories::data()?.join("shaken.db");
+    let pool = sqlx::SqlitePool::new(db_file.to_string_lossy().to_string().as_str()).await?;
 
-    let pool = sqlx::SqlitePool::new(db_file.to_string_lossy().to_string().as_str())
-        .await
-        .unwrap();
+    let mut watcher = shaken::watcher::Watcher::new()?;
+    let file = args::get_config_file_path()?;
+    let handle = watcher.watch_file(file, Arc::new(config.clone())).await?;
 
     // initialize all of the modules
     let modules::ModuleInit {
         mut state,
         command_map: commands,
         passive_list: passives,
+        config: handle,
         pool,
         ..
     } = modules::ModuleInit::initialize(
-        &config,      // bot configuration
         &mut secrets, // secret store
         pool,
+        handle, // configuration handle
     )
     .await?;
 
+    state.insert(handle);
     state.insert(pool);
 
     // create required twitchchat stuff

@@ -5,13 +5,13 @@ pub trait NameAndId {
 
     fn id(&self) -> u64;
 
-    fn check_list<I>(&self, mut collection: I) -> anyhow::Result<()>
+    fn check_list<'a, I>(&self, mut collection: I) -> anyhow::Result<()>
     where
-        I: Iterator<Item = String>,
+        I: Iterator<Item = &'a String> + 'a,
     {
         let id = self.id().to_string();
         let name = self.name();
-        if collection.any(|ref s| s == &id || s == &name) {
+        if collection.any(|s| s == &id || s == &name) {
             return Ok(());
         }
         log::debug!("{} ({}) isn't on the list", name, id);

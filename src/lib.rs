@@ -47,6 +47,10 @@ mod user;
 use user::User;
 
 pub mod util;
+use std::sync::Arc;
+use tokio::sync::watch;
 use util::{dont_care, DontCare as _};
 
-mod watcher;
+pub mod watcher;
+
+pub type WatchedConfig = watch::Receiver<Arc<Config>>;

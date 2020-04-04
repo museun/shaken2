@@ -1,31 +1,48 @@
-#![cfg_attr(debug_assertions, allow(dead_code, unused_variables))]
+use futures::prelude::*;
+use notify::Watcher as _;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
+use tokio::sync::{mpsc, watch, Notify};
 
-use futures::{future::BoxFuture, stream::FuturesUnordered};
-use notify::{event::Event, Watcher as _};
-use std::path::Path;
-use tokio::{sync::watch, time::Duration};
-
-/// Tokio broadcast file watcher
 pub struct Watcher {
+    rx: mpsc::Receiver<notify::event::Event>,
+    notify: Arc<Notify>,
     watcher: notify::RecommendedWatcher,
-    rx: crossbeam_channel::Receiver<Result<Event, notify::Error>>,
-    watched: FuturesUnordered<BoxFuture<'static, anyhow::Result<()>>>,
+    watched: HashMap<PathBuf, mpsc::Sender<PathBuf>>,
 }
 
 impl Watcher {
-    /// Create a new watcher
     pub fn new() -> anyhow::Result<Self> {
-        let (tx, rx) = crossbeam_channel::bounded(32);
-        let watcher = notify::watcher(tx, Duration::from_secs(2))?;
+        let (tx, rx) = mpsc::channel(32);
+        let notify = Arc::new(Notify::new());
+
+        let watcher = notify::RecommendedWatcher::new_immediate({
+            let notify = notify.clone();
+            // mutex because the closure is an Fn and we should probably
+            // synchronize borrows
+            let tx = Mutex::new(tx);
+            move |ev| {
+                if let Ok(ev) = ev {
+                    if tx.lock().unwrap().try_send(ev).is_ok() {
+                        return;
+                    }
+                }
+                notify.notify();
+            }
+        })?;
+
         Ok(Self {
-            watcher,
             rx,
-            watched: Default::default(),
+            notify,
+            watcher,
+            watched: HashMap::new(),
         })
     }
 
-    /// Watch this file provided the initial item
-    pub fn watch<C: Clone>(
+    pub async fn watch_file<C: Clone>(
         &mut self,
         file: impl AsRef<Path>,
         item: C,
@@ -33,49 +50,115 @@ impl Watcher {
     where
         for<'de> C: serde::Deserialize<'de> + Send + Sync + 'static,
     {
-        let (watch_tx, watch_rx) = watch::channel(item);
+        let (watch_tx, watch_rx) = watch::channel::<C>(item);
         self.watcher
-            .watch(file, notify::RecursiveMode::NonRecursive)?;
+            .watch(&file, notify::RecursiveMode::NonRecursive)?;
 
-        let rx = self.rx.clone();
-        let fut = tokio::task::spawn_blocking(move || {
-            for event in rx.into_iter().flatten() {
-                use notify::event::{DataChange, EventKind, ModifyKind};
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<PathBuf>(1);
 
-                let Event { kind, paths, .. } = event;
-                if paths.is_empty() {
-                    continue;
-                }
+        // detach the task because the channel controls when it dies
+        // so dropping the sender from the hashmap will end this task
+        tokio::task::spawn(async move {
+            while let Some(path) = rx.next().await {
+                let data = match tokio::fs::read_to_string(&path).await {
+                    Ok(data) => data,
+                    Err(err) => {
+                        log::warn!("cannot read '{}': {}", path.display(), err);
+                        break;
+                    }
+                };
 
-                match kind {
-                    EventKind::Modify(ModifyKind::Data(DataChange::Content))
-                    | EventKind::Modify(ModifyKind::Any) => {}
-                    _ => continue,
-                }
+                let item = match toml::from_str(&data) {
+                    Ok(item) => item,
+                    Err(err) => {
+                        log::warn!("cannot deserialize '{}': {}", path.display(), err);
+                        break;
+                    }
+                };
 
-                if let Some(item) = std::fs::read_to_string(&paths[0])
-                    .ok()
-                    .and_then(|data| toml::from_str(&data).ok())
-                {
-                    let _ = watch_tx.broadcast(item);
+                if watch_tx.broadcast(item).is_err() {
+                    break;
                 }
             }
         });
 
-        use futures::prelude::*;
         self.watched
-            .push(fut.map_err(Into::into).map_ok(|_| ()).boxed());
+            .insert(tokio::fs::canonicalize(file).await?, tx);
+
         Ok(watch_rx)
     }
 
-    pub async fn run_to_completion(self) {
-        use futures::stream::StreamExt as _;
-        self.watched
-            .for_each(|res| async move {
-                if let Err(err) = res {
-                    log::error!("watcher ran into an error: {}", err)
+    pub fn abort_handle(&self) -> Arc<Notify> {
+        Arc::clone(&self.notify)
+    }
+
+    pub async fn run_to_completion(mut self) -> anyhow::Result<()> {
+        let delay = std::time::Duration::from_secs(1);
+        tokio::pin! {
+            let notify = self.notify;
+            let rx = self.rx;
+            let delay_tick = tokio::time::interval(delay);
+        }
+
+        let mut queue = DebounceQueue::<PathBuf>::new(delay);
+
+        loop {
+            tokio::select! {
+                _ = notify.notified() => { break }
+                Some(instant) = delay_tick.next() => {
+                    if let Some(item) = queue.force(instant) {
+                        if let Ok(canon) = tokio::fs::canonicalize(item).await {
+                            if let Some(tx) = self.watched.get_mut(&canon) {
+                                tx.send(canon).await.expect("send item");
+                            } else {
+                                log::error!("path not found :(");
+                            }
+                        }
+                    }
                 }
-            })
-            .await;
+                Some(ev) = rx.next() => {
+                    if let notify::event::EventKind::Modify(notify::event::ModifyKind::Any) = ev.kind {
+                        let mut ev = ev;
+                        // if notify messes up, this panics. but thats not our problem
+                        queue.push(ev.paths.swap_remove(0));
+                    }
+                }
+                else => { break }
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+struct DebounceQueue<T> {
+    freq: std::time::Duration,
+    last: tokio::time::Instant,
+    queue: Vec<T>,
+}
+
+impl<T> DebounceQueue<T> {
+    fn new(freq: std::time::Duration) -> Self {
+        Self {
+            freq,
+            last: tokio::time::Instant::now(),
+            queue: vec![],
+        }
+    }
+}
+
+impl<T> DebounceQueue<T> {
+    fn force(&mut self, comp: tokio::time::Instant) -> Option<T> {
+        if comp.saturating_duration_since(self.last) > self.freq {
+            return self.queue.drain(..).last();
+        }
+        None
+    }
+
+    fn push(&mut self, item: T) {
+        let now = tokio::time::Instant::now();
+        self.queue.push(item);
+        self.last = now;
     }
 }

@@ -2,7 +2,6 @@ use {super::*, crate::*};
 
 use futures::prelude::*;
 use rand::prelude::*;
-use tokio::sync::Mutex;
 use tokio::time::{Duration, Instant};
 
 #[derive(Debug, Template)]
@@ -15,7 +14,8 @@ pub async fn initialize<R>(init: &mut ModuleInit<'_, R>)
 where
     R: Responder + Send + 'static,
 {
-    let Config { shakespeare, .. } = &init.config;
+    let mut config = init.config.clone();
+    let Config { shakespeare, .. } = &*config.next().await.expect("initial configuration");
 
     let config::Shakespeare {
         address,
@@ -25,6 +25,7 @@ where
         ..
     } = shakespeare;
 
+    // TODO make this change the these settings when the file changes
     let client = Shakespeare::new(
         client::Client::new(address),
         Duration::from_secs(*interval),
@@ -33,7 +34,6 @@ where
     );
 
     init.state.insert(client);
-    init.state.insert(shakespeare.clone());
 
     init.command_map.add("speak", command);
     init.passive_list.add(passive);
@@ -43,12 +43,18 @@ async fn command<R>(mut context: Context<Command>, mut responder: R) -> Result
 where
     R: Responder + Send + 'static,
 {
-    use config::Shakespeare as C;
-    crate::util::check_config(&mut context, |conf: C| conf.whitelist).await?;
+    context.args.room().check_list(
+        context
+            .get_current_config()
+            .await?
+            .shakespeare
+            .whitelist
+            .iter(),
+    )?;
 
     let data = {
         let cache = &mut *context.state_mut().await;
-        let client = cache.expect_get::<Shakespeare>()?;
+        let client = cache.expect_get_mut::<Shakespeare>()?;
         client.trigger().await.dont_care()?
     };
     let resp = Response::Shakespeare { data: &data };
@@ -59,8 +65,14 @@ async fn passive<R>(mut context: Context<Passive>, mut responder: R) -> Result
 where
     R: Responder + Send + 'static,
 {
-    use config::Shakespeare as C;
-    crate::util::check_config(&mut context, |conf: C| conf.whitelist).await?;
+    context.args.room().check_list(
+        context
+            .get_current_config()
+            .await?
+            .shakespeare
+            .whitelist
+            .iter(),
+    )?;
 
     let user = context.get_our_user().await;
     // TODO make this a regex or do some case folding
@@ -68,7 +80,7 @@ where
 
     let data = {
         let cache = &mut *context.state_mut().await;
-        let client = cache.expect_get::<Shakespeare>()?;
+        let client = cache.expect_get_mut::<Shakespeare>()?;
 
         if force {
             client.trigger().await.dont_care()?
@@ -89,11 +101,10 @@ pub struct Shakespeare {
     quiet: Duration,
     chance: f32,
 
-    last: Mutex<Option<Instant>>,
+    last: Option<Instant>,
 }
 
 impl Shakespeare {
-    /// Create a new Shakespeare brain
     pub fn new(client: client::Client, interval: Duration, quiet: Duration, chance: f32) -> Self {
         Self {
             client,
@@ -102,14 +113,14 @@ impl Shakespeare {
             quiet,
             chance,
 
-            last: Mutex::default(),
+            last: None,
         }
     }
 
     // TODO context
 
-    pub async fn passive<R: ?Sized + Rng>(&self, rng: &mut R) -> Option<String> {
-        if let Some(last) = &mut *self.last.lock().await {
+    pub async fn passive<R: ?Sized + Rng>(&mut self, rng: &mut R) -> Option<String> {
+        if let Some(last) = self.last.as_mut() {
             let now = Instant::now();
             if now.checked_duration_since(*last)? > self.quiet {
                 *last = now;
@@ -124,7 +135,7 @@ impl Shakespeare {
         self.generate().await
     }
 
-    pub async fn trigger(&self) -> Option<String> {
+    pub async fn trigger(&mut self) -> Option<String> {
         if !self.ensure_less_spam().await {
             return None;
         }
@@ -143,18 +154,18 @@ impl Shakespeare {
     }
 
     pub async fn next_open_time(&self) -> Option<Duration> {
-        let last = (*self.last.lock().await)?;
-        self.interval.checked_sub(Instant::now() - last)
+        let last = self.last.as_ref()?;
+        self.interval.checked_sub(Instant::now() - *last)
     }
 
-    async fn ensure_less_spam(&self) -> bool {
+    async fn ensure_less_spam(&mut self) -> bool {
         match self.next_open_time().await {
             Some(dur) => {
                 log::debug!("waiting {:.2?}", dur);
                 false
             }
             None => {
-                self.last.lock().await.replace(Instant::now());
+                self.last.replace(Instant::now());
                 true
             }
         }
@@ -178,7 +189,7 @@ mod tests {
         let server = Server::run();
         let url = format!("http://{}", server.addr());
 
-        let shakespeare = Shakespeare::new(
+        let mut shakespeare = Shakespeare::new(
             client::Client::new(url),
             Duration::from_secs(10),
             Duration::from_secs(30),
@@ -229,7 +240,7 @@ mod tests {
         let server = Server::run();
         let url = format!("http://{}", server.addr());
 
-        let shakespeare = Shakespeare::new(
+        let mut shakespeare = Shakespeare::new(
             client::Client::new(url),
             Duration::from_secs(10),
             Duration::from_secs(30),
@@ -281,7 +292,7 @@ mod tests {
         // chosen by magic
         // pattern should yield [true, false, ..]
         let mut rng = rand::rngs::mock::StepRng::new(1 << 8 | 1 << (8 + 32), 1 << 31);
-        let shakespeare = Shakespeare::new(
+        let mut shakespeare = Shakespeare::new(
             client::Client::new(url),
             Duration::from_secs(10),
             Duration::from_secs(30),

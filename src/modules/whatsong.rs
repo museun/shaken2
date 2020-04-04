@@ -1,3 +1,4 @@
+use futures::prelude::*;
 use {super::*, crate::*};
 
 #[derive(Debug, Template)]
@@ -25,8 +26,16 @@ where
     init.command_map.add("current", current_song);
     init.command_map.add("previous", previous_song);
 
-    let config = &init.config.whatsong.address;
-    init.state.insert(Client::new(config));
+    let mut config = init.config.clone();
+    // TODO update this when the configuration changes
+    let address = &config
+        .next()
+        .await
+        .expect("initial config")
+        .whatsong
+        .address;
+
+    init.state.insert(Client::new(address));
 
     // TODO song list
 }

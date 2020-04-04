@@ -43,12 +43,27 @@ impl<Args> Context<Args> {
         func(self.state.read().await)
     }
 
+    // TODO don't split these so we don't have worry about dumb borrows
     pub async fn state(&self) -> tokio::sync::RwLockReadGuard<'_, State> {
         self.state.read().await
     }
 
+    // TODO don't split these so we don't have worry about dumb borrows
     pub async fn state_mut(&mut self) -> tokio::sync::RwLockWriteGuard<'_, State> {
         self.state.write().await
+    }
+
+    // TODO make this an Arc
+    pub async fn get_current_config(&self) -> anyhow::Result<std::sync::Arc<crate::Config>> {
+        use futures::prelude::*;
+        self.state
+            .write()
+            .await
+            .expect_get_mut::<crate::WatchedConfig>()?
+            .next()
+            .await
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("cannot get the current configuration"))
     }
 }
 

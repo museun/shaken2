@@ -1,11 +1,11 @@
-use crate::{CommandMap, Config, PassiveList, Responder, State};
+use crate::{CommandMap, PassiveList, Responder, State};
 
 type Result = anyhow::Result<()>;
 
 pub struct ModuleInit<'a, R> {
-    pub config: &'a Config,
     pub secrets: &'a mut crate::secrets::Secrets,
     pub pool: sqlx::SqlitePool,
+    pub config: crate::WatchedConfig,
 
     pub state: State,
     pub command_map: CommandMap<R>,
@@ -16,15 +16,16 @@ pub struct ModuleInit<'a, R> {
 
 impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
     pub async fn initialize(
-        config: &'a Config,
         secrets: &'a mut crate::secrets::Secrets,
         pool: sqlx::SqlitePool,
+        config: crate::WatchedConfig,
     ) -> anyhow::Result<ModuleInit<'a, R>> {
         let (command_map, passive_list, state, _responder) = Default::default();
         let mut this = ModuleInit {
-            config,
             secrets,
             pool,
+            config,
+
             command_map,
             passive_list,
             state,

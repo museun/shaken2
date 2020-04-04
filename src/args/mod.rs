@@ -35,6 +35,10 @@ const USER_TEMPLATES: &str = "user_templates.toml";
 
 const DEFAULT_TEMPLATES_BODY: &str = include_str!("../../default_templates.toml");
 
+pub fn get_config_file_path() -> anyhow::Result<PathBuf> {
+    Directories::config().map(|c| c.join(CONFIG_FILE))
+}
+
 pub fn handle_args() -> (Config, DefaultTemplateStore) {
     let mut args = pico_args::Arguments::from_env();
 

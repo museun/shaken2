@@ -12,6 +12,9 @@ fn main() {
         "cargo:rustc-env=SHAKEN_USER_AGENT={}",
         format!("shaken_bot/{} (github.com/museun/shaken)", rev,)
     );
+
+    // TODO initialize the reference DB here
+    // TODO set the DATABASE_URL here (the code uses a path)
 }
 
 fn get_git(args: &[&str]) -> Option<String> {
