@@ -80,14 +80,17 @@ impl WriterResponder {
         resolver
             .lock()
             .await
-            .resolve(T::namespace(), template.variant())
+            .resolve(
+                T::namespace(Default::default()),
+                template.variant(Default::default()),
+            )
             .cloned()
             .ok_or_else(|| {
                 anyhow::anyhow!(
                     "cannot resolve template for '{}' {}::{}",
-                    T::name(),
-                    T::namespace(),
-                    template.variant(),
+                    T::name(template::NameCasing::Original),
+                    T::namespace(template::NameCasing::Original),
+                    template.variant(template::NameCasing::Original),
                 )
             })
     }
@@ -96,9 +99,9 @@ impl WriterResponder {
         template.apply(data).ok_or_else(|| {
             anyhow::anyhow!(
                 "invalid template for '{}' {}::{}",
-                T::name(),
-                T::namespace(),
-                template.variant()
+                T::name(template::NameCasing::Original),
+                T::namespace(template::NameCasing::Original),
+                template.variant(template::NameCasing::Original)
             )
         })
     }

@@ -20,8 +20,8 @@ rand            = { version = "0.7.3", features = ["small_rng"] }
 reqwest         = { version = "0.10.4", default-features = false, features = ["json", "gzip", "native-tls"] }
 serde           = { version = "1.0.105", features = ["derive", "rc"] } # rc is requires because we're going /into/ an Arc. don't use it for 'from an arc' type of types
 simple_env_load = "0.1.0"
-sqlx            = { git = "https://github.com/museun/sqlx", default-features = false, features = ["sqlite", "runtime-tokio-notls", "macros", "time"], branch = "no_tls_tokio" } 
-template        = { git = "https://github.com/museun/template", rev = "ece485f2a71d7b89441db54329aff541c84fe4af", features = ["derive", "toml"] }
+sqlx            = { default-features = false, features = ["sqlite", "runtime-tokio", "macros", "time"], git = "https://github.com/museun/sqlx", branch = "no_tls" } 
+template        = { git = "https://github.com/museun/template", features = ["derive", "toml"] }
 time            = { version = "0.2.9", features = ["serde"] }
 tokio           = { version = "0.2.13", features = ["full", "macros"] }
 toml            = "0.5.6"

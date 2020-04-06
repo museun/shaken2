@@ -21,9 +21,9 @@ impl<R: Responder> Responder for LoggingResponder<R> {
         let user = context.args.user();
         log::trace!(
             "say {}.{}::{} to {} for {}",
-            T::name(),
-            T::namespace(),
-            template.variant(),
+            T::name(template::NameCasing::Original),
+            T::namespace(template::NameCasing::Original),
+            template.variant(template::NameCasing::Original),
             room,
             user
         );
@@ -37,9 +37,9 @@ impl<R: Responder> Responder for LoggingResponder<R> {
     {
         log::trace!(
             "reply {}.{}::{} to {} for {}",
-            T::name(),
-            T::namespace(),
-            template.variant(),
+            T::name(template::NameCasing::Original),
+            T::namespace(template::NameCasing::Original),
+            template.variant(template::NameCasing::Original),
             context.args.room(),
             context.args.user(),
         );
@@ -53,9 +53,9 @@ impl<R: Responder> Responder for LoggingResponder<R> {
     {
         log::trace!(
             "action {}.{}::{} to {} for {}",
-            T::name(),
-            T::namespace(),
-            template.variant(),
+            T::name(template::NameCasing::Original),
+            T::namespace(template::NameCasing::Original),
+            template.variant(template::NameCasing::Original),
             context.args.room(),
             context.args.user(),
         );

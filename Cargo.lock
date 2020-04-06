@@ -1529,8 +1529,8 @@ dependencies = [
 
 [[package]]
 name = "sqlx"
-version = "0.3.0-alpha.1"
-source = "git+https://github.com/museun/sqlx?branch=no_tls_tokio#a580e8aa7ecb876d02599cd07413c7c73ade621c"
+version = "0.3.3"
+source = "git+https://github.com/museun/sqlx?branch=no_tls#9164f8f85324df702490f500c36745654317c548"
 dependencies = [
  "sqlx-core",
  "sqlx-macros",
@@ -1538,8 +1538,8 @@ dependencies = [
 
 [[package]]
 name = "sqlx-core"
-version = "0.3.0-alpha.1"
-source = "git+https://github.com/museun/sqlx?branch=no_tls_tokio#a580e8aa7ecb876d02599cd07413c7c73ade621c"
+version = "0.3.3"
+source = "git+https://github.com/museun/sqlx?branch=no_tls#9164f8f85324df702490f500c36745654317c548"
 dependencies = [
  "async-stream",
  "bitflags",
@@ -1562,8 +1562,8 @@ dependencies = [
 
 [[package]]
 name = "sqlx-macros"
-version = "0.3.0-alpha.1"
-source = "git+https://github.com/museun/sqlx?branch=no_tls_tokio#a580e8aa7ecb876d02599cd07413c7c73ade621c"
+version = "0.3.3"
+source = "git+https://github.com/museun/sqlx?branch=no_tls#9164f8f85324df702490f500c36745654317c548"
 dependencies = [
  "dotenv",
  "futures",
@@ -1671,7 +1671,7 @@ dependencies = [
 [[package]]
 name = "template"
 version = "0.1.0"
-source = "git+https://github.com/museun/template?rev=ece485f2a71d7b89441db54329aff541c84fe4af#ece485f2a71d7b89441db54329aff541c84fe4af"
+source = "git+https://github.com/museun/template#18f27747bf8ce8e1337d1af2718488e26bcfc366"
 dependencies = [
  "log",
  "markings",
@@ -1683,7 +1683,7 @@ dependencies = [
 [[package]]
 name = "template_derive"
 version = "0.1.0"
-source = "git+https://github.com/museun/template?rev=ece485f2a71d7b89441db54329aff541c84fe4af#ece485f2a71d7b89441db54329aff541c84fe4af"
+source = "git+https://github.com/museun/template#18f27747bf8ce8e1337d1af2718488e26bcfc366"
 dependencies = [
  "heck",
  "quote",
