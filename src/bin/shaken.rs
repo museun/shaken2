@@ -30,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
     let (mut secrets, config, templates) = handle_startup()?;
 
     let db_file = Directories::data()?.join("shaken.db");
-    let pool = sqlx::SqlitePool::new(db_file.to_string_lossy().to_string().as_str()).await?;
+    // let pool = sqlx::SqlitePool::new(db_file.to_string_lossy().to_string().as_str()).await?;
 
     let mut watcher = shaken::watcher::Watcher::new()?;
     let file = args::get_config_file_path()?;
@@ -42,17 +42,17 @@ async fn main() -> anyhow::Result<()> {
         command_map: commands,
         passive_list: passives,
         config: handle,
-        pool,
+        // pool,
         ..
     } = modules::ModuleInit::initialize(
         &mut secrets, // secret store
-        pool,
+        // pool,
         handle, // configuration handle
     )
     .await?;
 
     state.insert(handle);
-    state.insert(pool);
+    // state.insert(pool);
 
     // create required twitchchat stuff
     let dispatcher = Dispatcher::new();

@@ -4,7 +4,7 @@ type Result = anyhow::Result<()>;
 
 pub struct ModuleInit<'a, R> {
     pub secrets: &'a mut crate::secrets::Secrets,
-    pub pool: sqlx::SqlitePool,
+    //pub pool: sqlx::SqlitePool,
     pub config: crate::WatchedConfig,
 
     pub state: State,
@@ -17,13 +17,13 @@ pub struct ModuleInit<'a, R> {
 impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
     pub async fn initialize(
         secrets: &'a mut crate::secrets::Secrets,
-        pool: sqlx::SqlitePool,
+        //pool: sqlx::SqlitePool,
         config: crate::WatchedConfig,
     ) -> anyhow::Result<ModuleInit<'a, R>> {
         let (command_map, passive_list, state, _responder) = Default::default();
         let mut this = ModuleInit {
             secrets,
-            pool,
+            //pool,
             config,
 
             command_map,
@@ -43,7 +43,7 @@ impl<'a, R: Responder + Send + 'static> ModuleInit<'a, R> {
         whatsong::initialize(&mut this).await;
 
         // this has to be at the end so it won't clobber the built-in commands
-        user_defined::initialize(&mut this).await?;
+        // user_defined::initialize(&mut this).await?;
 
         Ok(this)
     }
@@ -67,4 +67,4 @@ mod version;
 mod viewers;
 mod whatsong;
 
-mod user_defined;
+//mod user_defined;

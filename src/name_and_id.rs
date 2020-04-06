@@ -9,6 +9,7 @@ pub trait NameAndId {
     where
         I: Iterator<Item = &'a String> + 'a,
     {
+        // TODO why is this allocating it?
         let id = self.id().to_string();
         let name = self.name();
         if collection.any(|s| s == &id || s == &name) {
